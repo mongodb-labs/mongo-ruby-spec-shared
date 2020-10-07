@@ -27,6 +27,30 @@ module Mrss
       end
     end
 
+    def min_server_fcv(version)
+      unless version =~ /\A\d+\.\d+\z/
+        raise ArgumentError, "FCV can only be major.minor: #{version}"
+      end
+
+      before(:all) do
+        unless ClusterConfig.instance.fcv_ish >= version
+          skip "FCV #{version} or higher required, we have #{ClusterConfig.instance.fcv_ish} (server #{ClusterConfig.instance.server_version})"
+        end
+      end
+    end
+
+    def max_server_fcv(version)
+      unless version =~ /\A\d+\.\d+\z/
+        raise ArgumentError, "Version can only be major.minor: #{version}"
+      end
+
+      before(:all) do
+        if version < ClusterConfig.instance.fcv_ish
+          skip "FCV #{version} or lower required, we have #{ClusterConfig.instance.fcv_ish} (server #{ClusterConfig.instance.server_version})"
+        end
+      end
+    end
+
     def require_topology(*topologies)
       invalid_topologies = topologies - [:single, :replica_set, :sharded]
 
@@ -67,6 +91,9 @@ module Mrss
         end
       end
     end
+
+    # Fail command fail point was added to mongod in 4.0 and to mongos in 4.2.
+    alias :require_transaction_support :require_fail_command
 
     def require_tls
       before(:all) do
@@ -124,26 +151,41 @@ module Mrss
       end
     end
 
-    def require_auth
+    def require_auth(*values)
       before(:all) do
-        unless ENV['AUTH'] == 'auth' || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
-          skip "Auth required"
+        if values.any?
+          unless values.include?(ENV['AUTH'])
+            msg = values.map { |v| "AUTH=#{v}" }.join(' or ')
+            skip "This test requires #{msg}"
+          end
+        else
+          unless ENV['AUTH'] == 'auth' || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
+            skip "Auth required"
+          end
         end
       end
     end
 
     def require_no_auth
       before(:all) do
-        if ENV['AUTH'] == 'auth' || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
+        if (ENV['AUTH'] && ENV['AUTH'] != 'noauth') || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
           skip "Auth not allowed"
         end
       end
     end
 
-    def require_no_x509_auth
+    def require_x509_auth
       before(:all) do
-        if SpecConfig.instance.x509_auth?
-          skip "X.509 auth not allowed"
+        unless SpecConfig.instance.x509_auth?
+          skip "X.509 auth required"
+        end
+      end
+    end
+
+    def require_no_external_user
+      before(:all) do
+        if SpecConfig.instance.external_user?
+          skip "External user configurations are not compatible with this test"
         end
       end
     end
@@ -221,6 +263,19 @@ module Mrss
         end
         unless have_default_port
           skip 'This test requires the test suite to be configured for localhost:27017'
+        end
+      end
+    end
+
+    # Some tests perform assertions on what the driver is logging.
+    # Some test configurations, for example OCSP with unknown response,
+    # produce warnings due to optional checks failing.
+    # This constraint skips tests that issue logging assertions on configurations
+    # that may produce non-test-originated log entries.
+    def require_warning_clean
+      before(:all) do
+        if ENV['OCSP_STATUS'] == 'unknown'
+          skip 'Unknown OCSP status is not global warning-clean'
         end
       end
     end
