@@ -93,7 +93,9 @@ module Mrss
     end
 
     # Fail command fail point was added to mongod in 4.0 and to mongos in 4.2.
-    alias :require_transaction_support :require_fail_command
+    def require_fail_command
+      require_transaction_support
+    end
 
     def require_tls
       before(:all) do
