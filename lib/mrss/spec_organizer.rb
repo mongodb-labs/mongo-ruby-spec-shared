@@ -53,7 +53,7 @@ module Mrss
 
           unless found
             buckets[nil] ||= []
-            buckets[nil] << rel_path
+            buckets[nil] << File.join('spec', rel_path)
           end
         end
       end.freeze
