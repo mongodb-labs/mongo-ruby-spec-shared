@@ -129,6 +129,24 @@ module Mrss
       end
     end
 
+    def require_zlib_compression
+      before(:all) do
+        compressors = SpecConfig.instance.compressors
+        unless compressors && compressors.include?('zlib')
+          skip "Zlib compression is not enabled"
+        end
+      end
+    end
+
+    def require_snappy_compression
+      before(:all) do
+        compressors = SpecConfig.instance.compressors
+        unless compressors && compressors.include?('snappy')
+          skip "Snappy compression is not enabled"
+        end
+      end
+    end
+
     def require_no_compression
       before(:all) do
         if SpecConfig.instance.compressors
