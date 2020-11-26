@@ -147,6 +147,15 @@ module Mrss
       end
     end
 
+    def require_no_snappy_compression
+      before(:all) do
+        compressors = SpecConfig.instance.compressors
+        if compressors && compressors.include?('snappy')
+          skip "Snappy compression is enabled"
+        end
+      end
+    end
+
     def require_no_compression
       before(:all) do
         if SpecConfig.instance.compressors
