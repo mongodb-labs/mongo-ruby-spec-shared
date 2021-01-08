@@ -1,3 +1,5 @@
+TOOLCHAIN_VERSION=289d4bec7c61e88000cea582c05fd8073b932122
+
 set_env_java() {
   ls -l /opt || true
   ls -l /usr/lib/jvm || true
@@ -74,7 +76,7 @@ set_env_ruby() {
 
     # For testing toolchains:
     #toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_distro`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_distro |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
-    toolchain_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/ruby-toolchain-`host_distro`-291ba4a4e8297f142796e70eee71b99f333e35e1.tar.xz
+    toolchain_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/ruby-toolchain-`host_distro`-$TOOLCHAIN_VERSION.tar.xz
     curl --retry 3 -fL $toolchain_url |tar Jxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
     #export PATH=`pwd`/rubies/python/3/bin:$PATH
