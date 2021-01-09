@@ -18,7 +18,7 @@ set_env_java() {
     # newer
     # rhel71-ppc, https://jira.mongodb.org/browse/BUILD-9231
     if test -z "$JAVACMD" &&
-      ls /opt/java |grep -q java-1.8.0-openjdk-1.8.0 &&
+      (ls /opt/java || true) |grep -q java-1.8.0-openjdk-1.8.0 &&
       test -f /opt/java/java-1.8.0-openjdk-1.8.0*/bin/java;
     then
       path=$(cd /opt/java && ls -d java-1.8.0-openjdk-1.8.0* |head -n 1)
