@@ -35,9 +35,10 @@ set_env_java() {
   
   if test -n "$JAVACMD"; then
     eval $JAVACMD -version
-  else
-    which java
+  elsif which java 2>/dev/null; then
     java -version
+  else
+    echo No java runtime found
   fi
 }
 
