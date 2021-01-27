@@ -156,6 +156,24 @@ module Mrss
       end
     end
 
+    def require_zstd_compression
+      before(:all) do
+        compressors = SpecConfig.instance.compressors
+        unless compressors && compressors.include?('zstd')
+          skip "Zstd compression is not enabled"
+        end
+      end
+    end
+
+    def require_no_zstd_compression
+      before(:all) do
+        compressors = SpecConfig.instance.compressors
+        if compressors && compressors.include?('zstd')
+          skip "Zstd compression is enabled"
+        end
+      end
+    end    
+    
     def require_no_compression
       before(:all) do
         if SpecConfig.instance.compressors
