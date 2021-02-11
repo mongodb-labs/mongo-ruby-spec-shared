@@ -25,13 +25,6 @@ FROM <%= base_image %>
 
   ENV DEBIAN_FRONTEND=noninteractive
 
-  # increment the counter to force apt-get update to run.
-  # zsh is not required for any scripts but it is a better interactive shell
-  # than bash.
-  RUN echo 4 && \
-    apt-get update && \
-    apt-get install -y curl zsh
-
 <% else %>
 
   RUN echo assumeyes=1 |tee -a /etc/yum.conf
@@ -57,6 +50,8 @@ FROM <%= base_image %>
 
 <% if debian? %>
 
+  # zsh is not required for any scripts but it is a better interactive shell
+  # than bash.
   # Ruby runtime dependencies: libyaml-0-2
   # Compiling ruby libraries: gcc make
   # Compiling pyhton packages: python2.7-dev
@@ -78,7 +73,7 @@ FROM <%= base_image %>
   # therefore install python-pip in all configurations here.
 
   <% packages = %w(
-    lsb-release bzip2
+    lsb-release bzip2 curl zsh
     git make gcc libyaml-0-2 libgmp-dev zlib1g-dev libsnappy-dev
     libsnmp30
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
@@ -102,7 +97,7 @@ FROM <%= base_image %>
     <% packages << 'tzdata nodejs' %>
   <% end %>
 
-  RUN apt-get install -y <%= packages.join(' ') %>
+  RUN apt-get update && apt-get install -y <%= packages.join(' ') %>
 <% else %>
 
   # Enterprise server: net-snmp
