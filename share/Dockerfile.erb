@@ -70,6 +70,7 @@ FROM <%= base_image %>
   # nio4r on JRuby: libgmp-dev
   # Snappy compression: libsnappy-dev
   # nokogiri: zlib1g-dev
+  # Mongoid testing: tzdata
   #
   # We currently use Python 2-compatible version of mtools, which
   # is installable via pip (which uses Python 2). All of the MongoDB
@@ -91,7 +92,8 @@ FROM <%= base_image %>
 
   RUN apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit \
-    bzip2 libgmp-dev python-pip python2.7-dev python3-pip libsnappy-dev zlib1g-dev
+    bzip2 libgmp-dev python-pip python2.7-dev python3-pip \
+    libsnappy-dev zlib1g-dev tzdata
 
 <% else %>
 
