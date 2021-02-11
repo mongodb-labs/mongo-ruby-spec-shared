@@ -70,31 +70,39 @@ FROM <%= base_image %>
   # nio4r on JRuby: libgmp-dev
   # Snappy compression: libsnappy-dev
   # nokogiri: zlib1g-dev
-  # Mongoid testing: tzdata, nodejs
+  # Mongoid application testing: tzdata, nodejs (8.x or newer)
   #
   # We currently use Python 2-compatible version of mtools, which
   # is installable via pip (which uses Python 2). All of the MongoDB
   # distros have pip installed (but none as of this writing have pip3)
   # therefore install python-pip in all configurations here.
 
+  <% packages = %w(
+    lsb-release bzip2
+    git make gcc libyaml-0-2 libgmp-dev zlib1g-dev libsnappy-dev
+    libsnmp30
+    krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
+    python-pip python2.7-dev python3-pip
+  ) %>
+
   # ubuntu1404 only has openjdk-7-jre-headless
   <% if distro !~ /ubuntu1404/ %>
-    RUN apt-get install -y openjdk-8-jre-headless
+    <% packages << 'openjdk-8-jre-headless' %>
   <% end %>
 
   # ubuntu1404, ubuntu1604: libcurl3
   # ubuntu1804: libcurl4
   <% if distro =~ /ubuntu1804/ %>
-    RUN apt-get install -y libcurl4
+    <% packages << 'libcurl4' %>
   <% else %>
-    RUN apt-get install -y libcurl3
+    <% packages << 'libcurl3' %>
   <% end %>
 
-  RUN apt-get install -y libsnmp30 libyaml-0-2 gcc make git lsb-release \
-    krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit \
-    bzip2 libgmp-dev python-pip python2.7-dev python3-pip \
-    libsnappy-dev zlib1g-dev tzdata nodejs
+  <% if distro =~ /ubuntu1804/ %>
+    <% packages << 'tzdata nodejs' %>
+  <% end %>
 
+  RUN apt-get install -y <%= packages.join(' ') %>
 <% else %>
 
   # Enterprise server: net-snmp
