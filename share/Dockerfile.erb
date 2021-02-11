@@ -60,7 +60,7 @@ FROM <%= base_image %>
   # Ruby runtime dependencies: libyaml-0-2
   # Compiling ruby libraries: gcc make
   # Compiling pyhton packages: python2.7-dev
-  # JRuby: openjdk-8-jre
+  # JRuby: openjdk-8-jre-headless
   # Server dependencies: libsnmp30 libcurl3/libcurl4
   # Determining OS we are running on: lsb-release
   # Kerberos testing: krb5-user
@@ -77,9 +77,9 @@ FROM <%= base_image %>
   # distros have pip installed (but none as of this writing have pip3)
   # therefore install python-pip in all configurations here.
 
-  # ubuntu1404 only has openjdk-7-jre
+  # ubuntu1404 only has openjdk-7-jre-headless
   <% if distro !~ /ubuntu1404/ %>
-    RUN apt-get install -y openjdk-8-jre
+    RUN apt-get install -y openjdk-8-jre-headless
   <% end %>
 
   # ubuntu1404, ubuntu1604: libcurl3
