@@ -65,7 +65,8 @@ FROM <%= base_image %>
   # nio4r on JRuby: libgmp-dev
   # Snappy compression: libsnappy-dev
   # nokogiri: zlib1g-dev
-  # Mongoid application testing: tzdata, nodejs (8.x or newer)
+  # Mongoid testing: tzdata
+  # Mongoid application testing: nodejs (8.x or newer)
   #
   # We currently use Python 2-compatible version of mtools, which
   # is installable via pip (which uses Python 2). All of the MongoDB
@@ -78,6 +79,7 @@ FROM <%= base_image %>
     libsnmp30
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
     python-pip python2.7-dev python3-pip
+    tzdata
   ) %>
 
   # ubuntu1404 only has openjdk-7-jre-headless
@@ -94,7 +96,7 @@ FROM <%= base_image %>
   <% end %>
 
   <% if distro =~ /ubuntu1804/ %>
-    <% packages << 'tzdata nodejs' %>
+    <% packages << 'nodejs' %>
   <% end %>
 
   RUN apt-get update && apt-get install -y <%= packages.join(' ') %>
