@@ -139,11 +139,15 @@ FROM <%= base_image %>
 
 <% if preload? %>
 
+  # Current virtualenv fails with
+  # https://github.com/pypa/virtualenv/issues/1630
+  RUN python2 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
+
   WORKDIR /app
 
   RUN curl --retry 3 -fL <%= server_download_url %> |tar xzf - && \
     mv mongo*/ /opt/mongodb
-  ENV USE_OPT_MONGODB=1
+  ENV USE_OPT_MONGODB=1 USE_SYSTEM_PYTHON_PACKAGES=1
 
   <% unless ruby_head? %>
 
