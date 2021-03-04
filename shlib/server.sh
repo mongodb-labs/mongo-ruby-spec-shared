@@ -140,6 +140,11 @@ calculate_server_args() {
   fi
 
   local args="--setParameter enableTestCommands=1"
+  
+  if test $mongo_version = 47; then
+    args="$args --setParameter acceptAPIVersion2=1"
+  fi
+  
   # diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
   # and mlaunch does not support specifying mongod-only parameters:
   # https://github.com/rueckstiess/mtools/issues/696
