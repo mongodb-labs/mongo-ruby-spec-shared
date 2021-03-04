@@ -46,6 +46,14 @@ module Mrss
       end
     end
 
+    def uri_open(*args)
+      if RUBY_VERSION < '2.5'
+        open(*args)
+      else
+        URI.open(*args)
+      end
+    end
+
     private
 
     def detect_version(catalog)
@@ -70,14 +78,6 @@ module Mrss
         end
       end
       [version, version_ok]
-    end
-
-    def uri_open(*args)
-      if RUBY_VERSION < '2.5'
-        open(*args)
-      else
-        URI.open(*args)
-      end
     end
 
     def current_catalog
