@@ -3,6 +3,18 @@ require 'open-uri'
 
 module Mrss
   class ServerVersionRegistry
+    class Error < StandardError
+    end
+
+    class UnknownVersion < Error
+    end
+
+    class MissingDownloadUrl < Error
+    end
+
+    class BrokenDownloadUrl < Error
+    end
+
     def initialize(desired_version, arch)
       @desired_version, @arch = desired_version, arch
     end
@@ -11,39 +23,16 @@ module Mrss
 
     def download_url
       @download_url ||= begin
-        info = JSON.load(uri_open('http://downloads.mongodb.org/current.json').read)
-        version = info['versions'].detect do |version|
-          version['version'].start_with?(desired_version) &&
-          !version['version'].include?('-') &&
-          # Sometimes the download situation is borked and there is a release
-          # with no downloads... skip those.
-          !version['downloads'].empty?
-        end
-        # Allow RC releases if there isn't a GA release.
-        version ||= info['versions'].detect do |version|
-          version['version'].start_with?(desired_version) &&
-          # Sometimes the download situation is borked and there is a release
-          # with no downloads... skip those.
-          !version['downloads'].empty?
+        version, version_ok = detect_version(current_catalog)
+        if version.nil?
+          version, full_version_ok = detect_version(full_catalog)
+          version_ok ||= full_version_ok
         end
         if version.nil?
-          info = JSON.load(URI.parse('http://downloads.mongodb.org/full.json').open.read)
-          versions = info['versions'].select do |version|
-            version['version'].start_with?(desired_version) &&
-            !version['downloads'].empty?
-          end
-          # Get rid of rc, beta etc. versions if there is a GA release.
-          if versions.any? { |version| !version.include?('-') }
-            versions.delete_if do |version|
-              version['version'].include?('-')
-            end
-          end
-          # Versions are ordered with newest first, take the first one i.e. the most
-          # recent one.
-          version = versions.first
-          if version.nil?
-            STDERR.puts "Error: no version #{desired_version}"
-            exit 2
+          if version_ok
+            raise MissingDownloadUrl, "No downloads for version #{desired_version}"
+          else
+            raise UnknownVersion, "No version #{desired_version}"
           end
         end
         dl = version['downloads'].detect do |dl|
@@ -51,11 +40,36 @@ module Mrss
           dl['arch'] == 'x86_64'
         end
         unless dl
-          STDERR.puts "Error: no download for #{arch} for #{version['version']}"
-          exit 2
+          raise MissingDownloadUrl, "No download for #{arch} for #{version['version']}"
         end
         url = dl['archive']['url']
       end
+    end
+
+    private
+
+    def detect_version(catalog)
+      candidate_versions = catalog['versions'].select do |version|
+        version['version'].start_with?(desired_version) &&
+        !version['version'].include?('-')
+      end
+      version_ok = !candidate_versions.empty?
+      # Sometimes the download situation is borked and there is a release
+      # with no downloads... skip those.
+      version = candidate_versions.detect do |version|
+        !version['downloads'].empty?
+      end
+      # Allow RC releases if there isn't a GA release.
+      if version.nil?
+        candidate_versions = catalog['versions'].select do |version|
+          version['version'].start_with?(desired_version)
+        end
+        version_ok ||= !candidate_versions.empty?
+        version = candidate_versions.detect do |version|
+          !version['downloads'].empty?
+        end
+      end
+      [version, version_ok]
     end
 
     def uri_open(*args)
@@ -63,6 +77,18 @@ module Mrss
         open(*args)
       else
         URI.open(*args)
+      end
+    end
+
+    def current_catalog
+      @current_catalog ||= begin
+        JSON.load(uri_open('http://downloads.mongodb.org/current.json').read)
+      end
+    end
+
+    def full_catalog
+      @full_catalog ||= begin
+        JSON.load(uri_open('http://downloads.mongodb.org/full.json').read)
       end
     end
   end
