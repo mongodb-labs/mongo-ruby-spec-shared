@@ -44,7 +44,26 @@ module Mrss
         end
         url = dl['archive']['url']
       end
+    rescue MissingDownloadUrl
+      if %w(4.7 4.7.0).include?(desired_version)
+        # 4.7.0 has no advertised downloads but it is downloadable and
+        # we do need it. Dirty hack below.
+        registry = self.class.new('4.4.3', arch)
+        registry.download_url.sub('4.4.3', '4.7.0').tap do |url|
+          # Sanity check - ensure the URL we hacked up is a valid one
+          io = uri_open(url)
+          begin
+            io.read(1)
+          ensure
+            io.close
+          end
+        end
+      else
+        raise
+      end
     end
+
+    private
 
     def uri_open(*args)
       if RUBY_VERSION < '2.5'
@@ -53,8 +72,6 @@ module Mrss
         URI.open(*args)
       end
     end
-
-    private
 
     def detect_version(catalog)
       candidate_versions = catalog['versions'].select do |version|
