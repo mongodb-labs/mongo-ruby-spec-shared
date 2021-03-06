@@ -134,14 +134,21 @@ install_mlaunch_git() {
 }
 
 calculate_server_args() {
+set -x
   local mongo_version=`echo $MONGODB_VERSION |tr -d .`
+  
+  if test -z "$mongo_version"; then
+    echo "$MONGODB_VERSION must be set and not contain only dots" 1>&2
+    exit 3
+  fi
+  
   if test $mongo_version = latest; then
-    mongo_version=44
+    mongo_version=49
   fi
 
   local args="--setParameter enableTestCommands=1"
   
-  if test $mongo_version = 47; then
+  if (( $mongo_version >= 47 )); then
     args="$args --setParameter acceptAPIVersion2=1"
   fi
   
