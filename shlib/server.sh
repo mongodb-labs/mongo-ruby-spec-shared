@@ -148,7 +148,7 @@ set -x
 
   local args="--setParameter enableTestCommands=1"
   
-  if (( $mongo_version >= 47 )); then
+  if test $mongo_version -ge 47; then
     args="$args --setParameter acceptAPIVersion2=1"
   fi
   
