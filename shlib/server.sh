@@ -134,7 +134,6 @@ install_mlaunch_git() {
 }
 
 calculate_server_args() {
-set -x
   local mongo_version=`echo $MONGODB_VERSION |tr -d .`
   
   if test -z "$mongo_version"; then
