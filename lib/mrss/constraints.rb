@@ -172,8 +172,8 @@ module Mrss
           skip "Zstd compression is enabled"
         end
       end
-    end    
-    
+    end
+
     def require_no_compression
       before(:all) do
         if SpecConfig.instance.compressors
@@ -323,6 +323,22 @@ module Mrss
       before(:all) do
         if ENV['OCSP_STATUS'] == 'unknown'
           skip 'Unknown OCSP status is not global warning-clean'
+        end
+      end
+    end
+
+    def require_required_api_version
+      before(:all) do
+        unless ENV['API_VERSION_REQUIRED'] == '1'
+          skip 'Set API_VERSION_REQUIRED=1 to run this test'
+        end
+      end
+    end
+
+    def require_no_required_api_version
+      before(:all) do
+        if ENV['API_VERSION_REQUIRED'] == '1'
+          skip 'Cannot have API_VERSION_REQUIRED=1 to run this test'
         end
       end
     end
