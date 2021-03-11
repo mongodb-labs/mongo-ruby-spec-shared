@@ -82,6 +82,11 @@ module Mrss
       @primary_description
     end
 
+    def server_parameters
+      determine_cluster_config
+      @server_parameters
+    end
+
     # Try running a command on the admin database to see if the mongod was
     # started with auth.
     def auth_enabled?
@@ -196,8 +201,10 @@ module Mrss
       @server_version = build_info['version']
       @enterprise = build_info['modules'] && build_info['modules'].include?('enterprise')
 
+      @server_parameters = client.use(:admin).command(getParameter: '*').first
+
       if @topology != :sharded && short_server_version >= '3.4'
-        rv = client.use(:admin).command(getParameter: 1, featureCompatibilityVersion: 1).first['featureCompatibilityVersion']
+        rv = @server_parameters['featureCompatibilityVersion']
         @fcv = rv['version'] || rv
       end
     end
