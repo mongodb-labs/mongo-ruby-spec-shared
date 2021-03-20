@@ -143,11 +143,12 @@ FROM <%= base_image %>
   # https://github.com/pypa/virtualenv/issues/1630
   RUN python2 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
 
-  WORKDIR /app
+  RUN pip --version && \
+    pip install mtools-legacy[mlaunch]
 
-  RUN curl --retry 3 -fL <%= server_download_url %> |tar xzf - && \
-    mv mongo*/ /opt/mongodb
-  ENV USE_OPT_MONGODB=1 USE_SYSTEM_PYTHON_PACKAGES=1
+  <% if @env.fetch('MONGODB_VERSION') >= '4.4' %>
+    RUN python3 -mpip install asn1crypto oscrypto flask
+  <% end %>
 
   <% unless ruby_head? %>
 
@@ -176,12 +177,9 @@ FROM <%= base_image %>
 
   <% end %>
 
-  RUN pip --version && \
-    pip install mtools-legacy[mlaunch]
-
-  <% if @env.fetch('MONGODB_VERSION') >= '4.4' %>
-    RUN python3 -mpip install asn1crypto oscrypto flask
-  <% end %>
+  RUN curl --retry 3 -fL <%= server_download_url %> |tar xzf - && \
+    mv mongo*/ /opt/mongodb
+  ENV USE_OPT_MONGODB=1 USE_SYSTEM_PYTHON_PACKAGES=1
 
 <% end %>
 
