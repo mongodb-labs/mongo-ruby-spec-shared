@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+# encoding: utf-8
+
 # ClusterConfig requires ClientRegistry class provided by the host project.
 
 require 'singleton'
