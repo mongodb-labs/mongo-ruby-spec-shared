@@ -163,7 +163,7 @@ calculate_server_args() {
     args="$args --replicaset --name ruby-driver-rs --nodes 2 --arbiter"
     export HAVE_ARBITER=1
   elif test "$TOPOLOGY" = sharded-cluster; then
-    args="$args --replicaset --nodes 1 --sharded 1 --name ruby-driver-rs"
+    args="$args --replicaset --nodes 2 --sharded 1 --name ruby-driver-rs"
     if test -z "$SINGLE_MONGOS"; then
       args="$args --mongos 2"
     fi
