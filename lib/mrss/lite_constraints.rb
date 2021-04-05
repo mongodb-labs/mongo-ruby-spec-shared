@@ -171,5 +171,21 @@ module Mrss
         end
       end
     end
+
+    def require_active_support
+      before(:all) do
+        if !SpecConfig.instance.active_support?
+          skip 'This test requires ActiveSupport; set WITH_ACTIVE_SUPPORT=1 in environment'
+        end
+      end
+    end
+
+    def no_active_support
+      before(:all) do
+        if SpecConfig.instance.active_support?
+          skip 'This test requires no ActiveSupport; unset WITH_ACTIVE_SUPPORT in environment'
+        end
+      end
+    end
   end
 end
