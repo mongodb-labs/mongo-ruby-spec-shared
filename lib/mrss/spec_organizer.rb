@@ -81,10 +81,20 @@ module Mrss
     end
 
     def run
+      run_buckets(*buckets.keys)
+    end
+
+    def run_buckets(*buckets)
       FileUtils.rm_f(rspec_all_json_path)
 
+      buckets.each do |bucket|
+        if bucket && !self.buckets[bucket]
+          raise "Unknown bucket #{bucket}"
+        end
+      end
+      buckets = Hash[self.buckets.select { |k, v| buckets.include?(k) }]
+
       failed = []
-      buckets = self.buckets.dup
 
       priority_order.each do |category|
         if files = buckets.delete(category)
