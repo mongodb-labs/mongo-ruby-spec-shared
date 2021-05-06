@@ -113,6 +113,14 @@ module Mrss
       end
     end
 
+    def require_retry_writes
+      before(:all) do
+        unless SpecConfig.instance.retry_writes?
+          skip "Retry writes is disabled"
+        end
+      end
+    end
+
     def require_no_retry_writes
       before(:all) do
         if SpecConfig.instance.retry_writes?
