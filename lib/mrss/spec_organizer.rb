@@ -25,17 +25,23 @@ module Mrss
     end
 
     def initialize(root: nil, classifiers:, priority_order:,
-      spec_root: nil, rspec_json_path: nil, rspec_all_json_path: nil
+      spec_root: nil, rspec_json_path: nil, rspec_all_json_path: nil,
+      randomize: false
     )
       @spec_root = spec_root || File.join(root, 'spec')
       @classifiers = classifiers
       @priority_order = priority_order
       @rspec_json_path = rspec_json_path || File.join(root, 'tmp/rspec.json')
       @rspec_all_json_path = rspec_all_json_path || File.join(root, 'tmp/rspec-all.json')
+      @randomize = !!randomize
     end
 
     attr_reader :spec_root, :classifiers, :priority_order
     attr_reader :rspec_json_path, :rspec_all_json_path
+
+    def randomize?
+      @randomize
+    end
 
     def buckets
       @buckets ||= {}.tap do |buckets|
@@ -122,8 +128,12 @@ module Mrss
       puts "Running #{category.to_s.gsub('_', ' ')} tests"
       FileUtils.rm_f(rspec_json_path)
       cmd = %w(rspec) + paths
+      if randomize?
+        cmd += %w(--order rand)
+      end
 
       begin
+        puts "Running #{cmd.join(' ')}"
         ChildProcessHelper.check_call(cmd)
       ensure
         if File.exist?(rspec_json_path)
