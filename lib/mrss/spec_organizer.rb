@@ -163,6 +163,9 @@ module Mrss
       end
       new.delete('version')
       new.delete('summary_line')
+      # The spec organizer runs all buckets with the same seed, hence
+      # we can drop the seed from new results.
+      new.delete('seed')
       unless new.empty?
         raise "Unhandled rspec results keys: #{new.keys.join(', ')}"
       end
