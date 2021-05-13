@@ -43,6 +43,10 @@ module Mrss
       @randomize
     end
 
+    def seed
+      @seed ||= (rand * 100_000).to_i
+    end
+
     def buckets
       @buckets ||= {}.tap do |buckets|
         Find.find(spec_root) do |path|
@@ -129,7 +133,7 @@ module Mrss
       FileUtils.rm_f(rspec_json_path)
       cmd = %w(rspec) + paths
       if randomize?
-        cmd += %w(--order rand)
+        cmd += %W(--order rand:#{seed})
       end
 
       begin
