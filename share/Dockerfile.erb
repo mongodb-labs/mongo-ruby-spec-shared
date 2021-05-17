@@ -76,20 +76,36 @@ FROM <%= base_image %>
   <% packages = %w(
     lsb-release bzip2 curl zsh
     git make gcc libyaml-0-2 libgmp-dev zlib1g-dev libsnappy-dev
-    libsnmp30
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
-    python-pip python2.7-dev python3-pip
+    python3-pip
     tzdata shared-mime-info
   ) %>
 
-  # ubuntu1404 only has openjdk-7-jre-headless
-  <% if distro !~ /ubuntu1404/ %>
+  <% if distro !~ /ubuntu2004/ %>
+    <% packages += %w(python2.7-dev) %>
+  <% end %>
+
+  <% if distro =~ /ubuntu2004/ %>
+    <% packages << 'libsnmp35' %>
+  <% else %>
+    <% packages << 'libsnmp30' %>
+  <% end %>
+
+  <% if distro !~ /ubuntu2004/ %>
+    <% packages << 'python-pip' %>
+  <% end %>
+
+  <% if distro =~ /debian10/ %>
+    <% packages << 'openjdk-11-jre-headless' %>
+  <% elsif distro =~ /ubuntu1404/ %>
+    # Ubuntu 14.04 only has openjdk 7, this is too old to be useful
+  <% else %>
     <% packages << 'openjdk-8-jre-headless' %>
   <% end %>
 
   # ubuntu1404, ubuntu1604: libcurl3
-  # ubuntu1804: libcurl4
-  <% if distro =~ /ubuntu1804/ %>
+  # ubuntu1804, ubuntu2004, debian10: libcurl4
+  <% if distro =~ /ubuntu1804|ubuntu2004|debian10/ %>
     <% packages << 'libcurl4' %>
   <% else %>
     <% packages << 'libcurl3' %>
@@ -141,7 +157,11 @@ FROM <%= base_image %>
 
   # Current virtualenv fails with
   # https://github.com/pypa/virtualenv/issues/1630
-  RUN python2 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
+  <% if distro =~ /ubuntu2004/ %>
+    RUN python3 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
+  <% else %>
+    RUN python2 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
+  <% end %>
 
   RUN pip --version && \
     pip install mtools-legacy[mlaunch]

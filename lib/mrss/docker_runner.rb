@@ -111,7 +111,7 @@ module Mrss
         '.'])
     end
 
-    BASE_TEST_COMMAND = %w(docker run -i --tmpfs /tmpfs:exec).freeze
+    BASE_TEST_COMMAND = %w(docker run --rm -i --tmpfs /tmpfs:exec).freeze
 
     def run_tests
       run_command(BASE_TEST_COMMAND + tty_arg + extra_env + [image_tag] +
@@ -183,6 +183,7 @@ module Mrss
       'ubuntu1404' => 'ubuntu:trusty',
       'ubuntu1604' => 'ubuntu:xenial',
       'ubuntu1804' => 'ubuntu:bionic',
+      'ubuntu2004' => 'ubuntu:focal',
       'rhel62' => 'centos:6',
       'rhel70' => 'centos:7',
     }.freeze
