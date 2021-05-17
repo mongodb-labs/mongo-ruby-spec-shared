@@ -179,6 +179,7 @@ module Mrss
     BASE_IMAGES = {
       'debian81' => 'debian:jessie',
       'debian92' => 'debian:stretch',
+      'debian10' => 'debian:buster',
       'ubuntu1404' => 'ubuntu:trusty',
       'ubuntu1604' => 'ubuntu:xenial',
       'ubuntu1804' => 'ubuntu:bionic',
