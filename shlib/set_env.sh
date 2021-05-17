@@ -68,9 +68,12 @@ set_env_ruby() {
     export PATH=`pwd`/ruby-head/bin:`pwd`/ruby-head/lib/ruby/gems/2.6.0/bin:$PATH
     ruby --version
     ruby --version |grep dev
+  elif test "$SYSTEM_RUBY" = 1; then
+    # Nothing
+    :
   else
     if test "$USE_OPT_TOOLCHAIN" = 1; then
-      # nothing, also PATH is already set
+      # Nothing, also PATH is already set
       :
     elif true; then
 

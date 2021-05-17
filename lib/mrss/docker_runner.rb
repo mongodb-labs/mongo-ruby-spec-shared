@@ -200,6 +200,10 @@ module Mrss
       ruby == 'ruby-head'
     end
 
+    def system_ruby?
+      %w(1 true yes).include?(@env['SYSTEM_RUBY']&.downcase)
+    end
+
     def server_version
       @env['MONGODB_VERSION']
     end

@@ -115,6 +115,10 @@ FROM <%= base_image %>
     <% packages << 'nodejs' %>
   <% end %>
 
+  <% if distro =~ /ubuntu2004/ %>
+    <% packages += %w(ruby ruby2.7 bundler python2 python2-dev) %>
+  <% end %>
+
   RUN apt-get update && apt-get install -y <%= packages.join(' ') %>
 <% else %>
 
@@ -170,7 +174,7 @@ FROM <%= base_image %>
     RUN python3 -mpip install asn1crypto oscrypto flask --upgrade
   <% end %>
 
-  <% unless ruby_head? %>
+  <% unless ruby_head? || system_ruby? %>
 
     RUN curl --retry 3 -fL <%= ruby_toolchain_url %> |tar -xC /opt -Jf -
     ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH \
@@ -179,7 +183,7 @@ FROM <%= base_image %>
 
   <% end %>
 
-  <% if distro =~ /rhel|ubuntu1604/ %>
+  <% if true || distro =~ /rhel|ubuntu1604/ %>
 
     # Ubuntu 12.04 ships pip 1.0 which is ancient and does not work.
     #
@@ -193,7 +197,7 @@ FROM <%= base_image %>
     # therefore install it the manual way.
     #
     # https://pip.pypa.io/en/stable/installing/
-    RUN curl --retry 3 -fL https://bootstrap.pypa.io/pip/2.7/get-pip.py | python
+    RUN curl --retry 3 -fL https://bootstrap.pypa.io/pip/2.7/get-pip.py | python2
 
   <% end %>
 
@@ -213,7 +217,12 @@ WORKDIR /app
   COPY lib/<%= project_lib_subdir %>/version.rb lib/<%= project_lib_subdir %>/version.rb
   RUN bundle install
   COPY .evergreen/patch-debuggers .evergreen/patch-debuggers
-  RUN .evergreen/patch-debuggers /opt/rubies
+  <% if system_ruby? %>
+    # Running under docker with root access
+    RUN .evergreen/patch-debuggers /var/lib/gems
+  <% else %>
+    RUN .evergreen/patch-debuggers /opt/rubies
+  <% end %>
 
 <% end %>
 
