@@ -122,6 +122,29 @@ FROM <%= base_image %>
   RUN apt-get update && apt-get install -y <%= packages.join(' ') %>
 <% else %>
 
+  <% if distro =~ /rhel6/ %>
+  
+    # CentOS 6 is dead - to use it retrieve the packages from vault:
+    # https://stackoverflow.com/questions/53562691/error-cannot-retrieve-repository-metadata-repomd-xml-for-repository-base-pl
+  
+    <%
+      
+      cfg = <<-CFG
+[base]
+name=CentOS-$releasever - Base
+#mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=os
+#baseurl=http://mirror.centos.org/centos/$releasever/os/$basearch/
+baseurl=http://vault.centos.org/6.10/os/x86_64/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
+CFG
+
+    %>
+  
+    RUN printf "<%= cfg.gsub("\n", "\\n") %>" >/etc/yum.repos.d/CentOS-Base.repo
+  
+  <% end %>
+  
   # Enterprise server: net-snmp
   # lsb_release: redhat-lsb-core
   # our runner scripts: which
@@ -138,7 +161,7 @@ FROM <%= base_image %>
 
   RUN yum install -y redhat-lsb-core which git gcc libyaml krb5-server \
     krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi java-1.8.0-openjdk \
-    net-snmp
+    net-snmp python3
 
   <% if distro =~ /rhel6/ %>
 
@@ -154,10 +177,28 @@ FROM <%= base_image %>
     RUN yum install -y python-devel
 
   <% end %>
-
+  
 <% end %>
 
 <% if preload? %>
+
+  <% if true || distro =~ /rhel|ubuntu1604/ %>
+
+    # Ubuntu 12.04 ships pip 1.0 which is ancient and does not work.
+    #
+    # Ubuntu 16.04 apparently also ships a pip that does not work:
+    # https://stackoverflow.com/questions/37495375/python-pip-install-throws-typeerror-unsupported-operand-types-for-retry
+    # Potentially this only affects environments with less than ideal
+    # connectivity (or, perhaps, when python package registry is experiencing
+    # availability issues) when pip must retry to install packages.
+    #
+    # rhel apparently does not package pip at all in core repoitories,
+    # therefore install it the manual way.
+    #
+    # https://pip.pypa.io/en/stable/installing/
+    RUN curl --retry 3 -fL https://bootstrap.pypa.io/pip/2.7/get-pip.py | python2
+
+  <% end %>
 
   # Current virtualenv fails with
   # https://github.com/pypa/virtualenv/issues/1630
@@ -180,24 +221,6 @@ FROM <%= base_image %>
     ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH \
       USE_OPT_TOOLCHAIN=1
     #ENV PATH=/opt/rubies/python/3/bin:$PATH
-
-  <% end %>
-
-  <% if true || distro =~ /rhel|ubuntu1604/ %>
-
-    # Ubuntu 12.04 ships pip 1.0 which is ancient and does not work.
-    #
-    # Ubuntu 16.04 apparently also ships a pip that does not work:
-    # https://stackoverflow.com/questions/37495375/python-pip-install-throws-typeerror-unsupported-operand-types-for-retry
-    # Potentially this only affects environments with less than ideal
-    # connectivity (or, perhaps, when python package registry is experiencing
-    # availability issues) when pip must retry to install packages.
-    #
-    # rhel apparently does not package pip at all in core repoitories,
-    # therefore install it the manual way.
-    #
-    # https://pip.pypa.io/en/stable/installing/
-    RUN curl --retry 3 -fL https://bootstrap.pypa.io/pip/2.7/get-pip.py | python2
 
   <% end %>
 
