@@ -212,6 +212,8 @@ CFG
     pip install mtools-legacy[mlaunch]
 
   <% if @env.fetch('MONGODB_VERSION') >= '4.4' %>
+    # ubuntu1604 installs MarkupSafe 0.0.0 here instead of 2.0.0+
+    # as specified by dependencies, causing OCSP mock to not work.
     RUN python3 -mpip install asn1crypto oscrypto flask --upgrade
   <% end %>
 
