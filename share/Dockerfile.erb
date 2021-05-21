@@ -230,6 +230,14 @@ CFG
 
 <% end %>
 
+<% if distro =~ /debian|ubuntu/ %>
+  # mkdir was moved from /usr/bin to /bin and MongoDB's distros
+  # apparently keep using the old location.
+  # This definitely affects debian10.
+  # https://stackoverflow.com/questions/64653051/make-usr-bin-mkdir-command-not-found-during-gem-install-nokogiri-in-ubuntu
+  RUN test -f /usr/bin/mkdir || ln -s /bin/mkdir /usr/bin/mkdir
+<% end %>
+
 WORKDIR /app
 
 <% if preload? && !ruby_head? %>
