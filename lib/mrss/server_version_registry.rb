@@ -25,6 +25,31 @@ module Mrss
     attr_reader :desired_version, :arch
 
     def download_url
+      if %w(4.7 4.9).include?(desired_version)
+        # 4.7.0 has no advertised downloads but it is downloadable and
+        # we do need it. Dirty hack below.
+        # 4.9.0 got broken so that the catalogs list 4.9.0-rc1 when
+        # 4.9.0-rc6 is available.
+        map = {
+          '4.7' => '4.7.0',
+          '4.9' => '4.9.0-rc2',
+        }
+        registry = self.class.new('4.4.6', arch)
+        registry.download_url.sub('4.4.6', map.fetch(desired_version)).tap do |url|
+          # Sanity check - ensure the URL we hacked up is a valid one
+          io = uri_open(url)
+          begin
+            io.read(1)
+          ensure
+            io.close
+          end
+        end
+      else
+        normal_download_url
+      end
+    end
+
+    def normal_download_url
       @download_url ||= begin
         version, version_ok = detect_version(current_catalog)
         if version.nil?
@@ -46,23 +71,6 @@ module Mrss
           raise MissingDownloadUrl, "No download for #{arch} for #{version['version']}"
         end
         url = dl['archive']['url']
-      end
-    rescue MissingDownloadUrl
-      if %w(4.7 4.7.0).include?(desired_version)
-        # 4.7.0 has no advertised downloads but it is downloadable and
-        # we do need it. Dirty hack below.
-        registry = self.class.new('4.4.3', arch)
-        registry.download_url.sub('4.4.3', '4.7.0').tap do |url|
-          # Sanity check - ensure the URL we hacked up is a valid one
-          io = uri_open(url)
-          begin
-            io.read(1)
-          ensure
-            io.close
-          end
-        end
-      else
-        raise
       end
     end
 
