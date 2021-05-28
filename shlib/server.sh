@@ -181,6 +181,7 @@ calculate_server_args() {
       args="$args --mongos 2"
       haproxy_config=$MRSS_ROOT/share/haproxy-1.conf
     fi
+    uri_options="$uri_options&loadBalanced=true"
   else
     echo "Unknown topology: $TOPOLOGY" 1>&2
     exit 1
