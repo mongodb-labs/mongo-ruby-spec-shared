@@ -167,7 +167,7 @@ calculate_server_args() {
     if test -z "$SINGLE_MONGOS"; then
       args="$args --mongos 2"
     fi
-  elif test "$TOPOLOGY" = single; then
+  elif test "$TOPOLOGY" = standalone; then
     args="$args --single"
   elif test "$TOPOLOGY" = load-balanced; then
     args="$args --replicaset --nodes 2 --sharded 1 --name test-rs --port 27117"
