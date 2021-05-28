@@ -58,6 +58,7 @@ FROM <%= base_image %>
   # JRuby: openjdk-8-jre-headless
   # Server dependencies: libsnmp30 libcurl3/libcurl4
   # Determining OS we are running on: lsb-release
+  # Load balancer testing: haproxy
   # Kerberos testing: krb5-user
   # Local Kerberos server: krb5-kdc krb5-admin-server
   # Installing mlaunch from git: git
@@ -77,6 +78,7 @@ FROM <%= base_image %>
     lsb-release bzip2 curl zsh
     git make gcc libyaml-0-2 libgmp-dev zlib1g-dev libsnappy-dev
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
+    haproxy
     python3-pip
     tzdata shared-mime-info
   ) %>

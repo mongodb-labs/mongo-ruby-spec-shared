@@ -160,15 +160,30 @@ calculate_server_args() {
   fi
   local uri_options=
   if test "$TOPOLOGY" = replica-set; then
-    args="$args --replicaset --name ruby-driver-rs --nodes 2 --arbiter"
+    args="$args --replicaset --name test-rs --nodes 2 --arbiter"
     export HAVE_ARBITER=1
   elif test "$TOPOLOGY" = sharded-cluster; then
-    args="$args --replicaset --nodes 2 --sharded 1 --name ruby-driver-rs"
+    args="$args --replicaset --nodes 2 --sharded 1 --name test-rs"
     if test -z "$SINGLE_MONGOS"; then
       args="$args --mongos 2"
     fi
-  else
+  elif test "$TOPOLOGY" = single; then
     args="$args --single"
+  elif test "$TOPOLOGY" = load-balanced; then
+    args="$args --replicaset --nodes 2 --sharded 1 --name test-rs --port 27117"
+    if test -z "$MRSS_ROOT"; then
+      echo "Please set MRSS_ROOT" 1>&2
+      exit 2
+    fi
+    if test -n "$SINGLE_MONGOS"; then
+      haproxy_config=$MRSS_ROOT/share/haproxy-1.conf
+    else
+      args="$args --mongos 2"
+      haproxy_config=$MRSS_ROOT/share/haproxy-1.conf
+    fi
+  else
+    echo "Unknown topology: $TOPOLOGY" 1>&2
+    exit 1
   fi
   if test -n "$MMAPV1"; then
     args="$args --storageEngine mmapv1 --smallfiles --noprealloc"
@@ -287,4 +302,13 @@ launch_ocsp_mock() {
 launch_server() {
   local dbdir="$1"
   python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $SERVER_ARGS
+
+  if test "$TOPOLOGY" = load-balanced; then
+    if test -z "$haproxy_config"; then
+      echo haproxy_config should have been set 1>&2
+      exit 3
+    fi
+    
+    haproxy -D -f $haproxy_config -p $mongodb_dir/haproxy.pid
+  fi
 }
