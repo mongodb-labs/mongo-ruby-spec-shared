@@ -350,5 +350,13 @@ module Mrss
         end
       end
     end
+
+    def require_unix_socket
+      before(:all) do
+        if ENV['TOPOLOGY'] == 'load-balanced'
+          skip 'Load balancer does not listen on Unix sockets'
+        end
+      end
+    end
   end
 end
