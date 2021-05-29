@@ -82,7 +82,7 @@ module Mrss
           unless ClusterConfig.instance.server_version >= '4.0'
             skip 'Transactions tests in a replica set topology require server 4.0+'
           end
-        when :sharded
+        when :sharded, :load_balanced
           unless ClusterConfig.instance.server_version >= '4.2'
             skip 'Transactions tests in a sharded cluster topology require server 4.2+'
           end

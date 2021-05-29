@@ -15,6 +15,11 @@ module Mrss
       @single_server
     end
 
+    def sharded_ish?
+      determine_cluster_config
+      @topology == :sharded || @topology == :load_balanced
+    end
+
     def replica_set_name
       determine_cluster_config
       @replica_set_name
@@ -48,7 +53,7 @@ module Mrss
         raise "Deployment server version not known - check that connection to deployment succeeded"
       end
 
-      if server_version >= '3.4' && topology != :sharded && topology != :load_balanced
+      if server_version >= '3.4' && !sharded_ish?
         fcv
       else
         if short_server_version == '4.1'
@@ -115,7 +120,7 @@ module Mrss
           :mmapv1
         else
           client = ClientRegistry.instance.global_client('root_authorized')
-          if topology == :sharded
+          if sharded_ish?
             shards = client.use(:admin).command(listShards: 1).first
             if shards['shards'].empty?
               raise 'Shards are empty'
@@ -206,7 +211,7 @@ module Mrss
 
       @server_parameters = client.use(:admin).command(getParameter: '*').first
 
-      if @topology != :sharded && @topology != :load_balanced && short_server_version >= '3.4'
+      if !sharded_ish? && short_server_version >= '3.4'
         rv = @server_parameters['featureCompatibilityVersion']
         @fcv = rv['version'] || rv
       end
