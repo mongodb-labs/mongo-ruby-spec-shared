@@ -48,7 +48,7 @@ module Mrss
         raise "Deployment server version not known - check that connection to deployment succeeded"
       end
 
-      if server_version >= '3.4' && topology != :sharded
+      if server_version >= '3.4' && topology != :sharded && topology != :load_balanced
         fcv
       else
         if short_server_version == '4.1'
@@ -206,7 +206,7 @@ module Mrss
 
       @server_parameters = client.use(:admin).command(getParameter: '*').first
 
-      if @topology != :sharded && short_server_version >= '3.4'
+      if @topology != :sharded && @topology != :load_balanced && short_server_version >= '3.4'
         rv = @server_parameters['featureCompatibilityVersion']
         @fcv = rv['version'] || rv
       end
