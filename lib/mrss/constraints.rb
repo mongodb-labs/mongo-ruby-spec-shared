@@ -52,7 +52,7 @@ module Mrss
     end
 
     def require_topology(*topologies)
-      invalid_topologies = topologies - [:single, :replica_set, :sharded]
+      invalid_topologies = topologies - [:single, :replica_set, :sharded, :load_balanced]
 
       unless invalid_topologies.empty?
         raise ArgumentError, "Invalid topologies requested: #{invalid_topologies.join(', ')}"
