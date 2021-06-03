@@ -249,7 +249,9 @@ module Mrss
     # (mongos 4.0+ overrides the write concern)
     def require_set_write_concern
       before(:all) do
-        if ClusterConfig.instance.topology == :sharded && ClusterConfig.instance.short_server_version >= '4.0'
+        if %i(sharded load_balanced).include?(ClusterConfig.instance.topology) &&
+          ClusterConfig.instance.short_server_version >= '4.0'
+        then
           skip "mongos 4.0+ overrides write concern"
         end
       end
