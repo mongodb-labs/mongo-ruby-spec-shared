@@ -148,7 +148,7 @@ calculate_server_args() {
   local args="--setParameter enableTestCommands=1"
   
   if test $mongo_version -ge 47; then
-    args="$args --setParameter acceptAPIVersion2=1"
+    args="$args --setParameter acceptApiVersion2=1"
   fi
   
   # diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
