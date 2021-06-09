@@ -147,7 +147,7 @@ calculate_server_args() {
 
   local args="--setParameter enableTestCommands=1"
   
-  if test $mongo_version -ge 49; then
+  if test $mongo_version -ge 50; then
     args="$args --setParameter acceptApiVersion2=1"
   elif test $mongo_version -ge 47; then
     args="$args --setParameter acceptAPIVersion2=1"
