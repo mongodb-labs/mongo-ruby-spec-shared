@@ -277,9 +277,7 @@ module Mrss
       before(:all) do
         # Storage detection fails for serverless instances. However, it is safe to
         # assume that a serverless instance uses WiredTiger Storage Engine.
-        break if SpecConfig.instance.serverless?
-
-        if ClusterConfig.instance.storage_engine != :wired_tiger
+        if !SpecConfig.instance.serverless? && ClusterConfig.instance.storage_engine != :wired_tiger
           skip 'Test requires WiredTiger storage engine'
         end
       end
@@ -290,9 +288,7 @@ module Mrss
         if ClusterConfig.instance.short_server_version >= '3.6'
           # Storage detection fails for serverless instances. However, it is safe to
           # assume that a serverless instance uses WiredTiger Storage Engine.
-          break if SpecConfig.instance.serverless?
-
-          if ClusterConfig.instance.storage_engine != :wired_tiger
+          if !SpecConfig.instance.serverless? && ClusterConfig.instance.storage_engine != :wired_tiger
             skip 'Test requires WiredTiger storage engine on 3.6+ servers'
           end
         end
