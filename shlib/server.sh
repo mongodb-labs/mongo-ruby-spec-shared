@@ -181,7 +181,7 @@ calculate_server_args() {
       haproxy_config=$MRSS_ROOT/share/haproxy-1.conf
     else
       args="$args --mongos 2"
-      haproxy_config=$MRSS_ROOT/share/haproxy-1.conf
+      haproxy_config=$MRSS_ROOT/share/haproxy-2.conf
     fi
     uri_options="$uri_options&loadBalanced=true"
   else
