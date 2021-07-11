@@ -265,10 +265,21 @@ module Mrss
       end
     end
 
+    # In sharded topology operations are distributed to the mongoses.
+    # When we set fail points, the fail point may be set on one mongos and
+    # operation may be executed on another mongos, causing failures.
+    # Tests that are not setting targeted fail points should utilize this
+    # method to restrict themselves to single mongos.
+    #
+    # In load-balanced topology, the same problem can happen when there is
+    # more than one mongos behind the load balancer.
     def require_no_multi_shard
       before(:all) do
         if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length > 1
           skip 'Test requires a single shard if run in sharded topology'
+        end
+        if ClusterConfig.instance.topology == :load_balanced && !SpecConfig.instance.single_mongos?
+          skip 'Test requires a minimum of two shards if run in sharded topology'
         end
       end
     end
