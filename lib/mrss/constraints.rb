@@ -262,6 +262,10 @@ module Mrss
         if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length == 1
           skip 'Test requires a minimum of two mongoses if run in sharded topology'
         end
+
+        if ClusterConfig.instance.topology == :load_balanced && SpecConfig.instance.single_mongos?
+          skip 'Test requires a minimum of two mongoses if run in load-balanced topology'
+        end
       end
     end
 
