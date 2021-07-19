@@ -12,10 +12,9 @@ server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#
 server_archive_basename = File.basename(server_url)
 server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
 
-toolchain_upper='291ba4a4e8297f142796e70eee71b99f333e35e1'
+toolchain_upper='8a922dc7a309db1388968c838a29a5f292674664'
 
-ruby_toolchain_url = "http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/ruby-toolchain-#{distro}-#{toolchain_upper}.tar.xz"
-#ruby_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/#{toolchain_upper}/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_patch_#{toolchain_upper}_#{toolchain_lower}.tar.gz"
+ruby_toolchain_url = "http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/#{toolchain_upper}/#{distro}/#{ruby}.tar.xz"
 
 %>
 
