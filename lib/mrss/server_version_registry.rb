@@ -61,6 +61,17 @@ module Mrss
             io.close
           end
         end
+      elsif %w(2.6 3.0).include?(desired_version) && arch == 'ubuntu1604'
+        # 2.6 and 3.0 are only available for ubuntu1204 and ubuntu1404.
+        # Those ubuntus have ancient Pythons that don't work due to not
+        # implementing recent TLS protocols.
+        # Because of this we test on ubuntu1604 which has a newer Python.
+        # But we still need to retrieve ubuntu1404-targeting builds.
+        url = self.class.new('3.2', arch).download_url
+        unless url.include?('3.2.')
+          raise 'URL not in expected format'
+        end
+        url.sub(/\b3\.2\.\d+/, '2.6.12').sub('ubuntu1604', 'ubuntu1404')
       else
         raise
       end
