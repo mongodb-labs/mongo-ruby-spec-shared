@@ -257,10 +257,14 @@ module Mrss
       end
     end
 
-    def require_multi_shard
+    def require_multi_mongos
       before(:all) do
         if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length == 1
-          skip 'Test requires a minimum of two shards if run in sharded topology'
+          skip 'Test requires a minimum of two mongoses if run in sharded topology'
+        end
+
+        if ClusterConfig.instance.topology == :load_balanced && SpecConfig.instance.single_mongos?
+          skip 'Test requires a minimum of two mongoses if run in load-balanced topology'
         end
       end
     end
