@@ -71,7 +71,14 @@ module Mrss
         unless url.include?('3.2.')
           raise 'URL not in expected format'
         end
-        url.sub(/\b3\.2\.\d+/, '2.6.12').sub('ubuntu1604', 'ubuntu1404')
+        url = case desired_version
+        when '2.6'
+          url.sub(/\b3\.2\.\d+/, '2.6.12')
+        when '3.0'
+          url.sub(/\b3\.2\.\d+/, '3.0.15')
+        else
+          raise NotImplementedError
+        end.sub('ubuntu1604', 'ubuntu1404')
       else
         raise
       end
