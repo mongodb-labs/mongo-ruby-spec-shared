@@ -10,21 +10,21 @@ set_fcv() {
 
 add_uri_option() {
   opt=$1
-  
+
   if ! echo $MONGODB_URI |sed -e s,//,, |grep -q /; then
     MONGODB_URI="$MONGODB_URI/"
   fi
-  
+
   if ! echo $MONGODB_URI |grep -q '?'; then
     MONGODB_URI="$MONGODB_URI?"
   fi
-  
+
   MONGODB_URI="$MONGODB_URI&$opt"
 }
 
 prepare_server() {
   arch=$1
-  
+
   if test -n "$USE_OPT_MONGODB"; then
     export BINDIR=/opt/mongodb/bin
     export PATH=$BINDIR:$PATH
@@ -39,7 +39,7 @@ prepare_server() {
   else
     download_version="$MONGODB_VERSION"
   fi
-  
+
   url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`
 
   prepare_server_from_url $url
@@ -80,7 +80,7 @@ install_mlaunch_pip() {
     # mlaunch is preinstalled in the docker image, do not install it here
     return
   fi
-  
+
   python -V || true
   python3 -V || true
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
@@ -96,20 +96,20 @@ install_mlaunch_git() {
   python3 -V || true
   which pip || true
   which pip3 || true
-  
+
   if false; then
     if ! virtualenv --version; then
       python3 `which pip3` install --user virtualenv
       export PATH=$HOME/.local/bin:$PATH
       virtualenv --version
     fi
-    
+
     venvpath="$MONGO_ORCHESTRATION_HOME"/venv
     virtualenv -p python3 $venvpath
     . $venvpath/bin/activate
-    
+
     pip3 install psutil pymongo
-    
+
     git clone $repo mlaunch
     cd mlaunch
     git checkout origin/$branch
@@ -118,13 +118,13 @@ install_mlaunch_git() {
   else
     pip install --user 'virtualenv==13'
     export PATH=$HOME/.local/bin:$PATH
-    
+
     venvpath="$MONGO_ORCHESTRATION_HOME"/venv
     virtualenv $venvpath
     . $venvpath/bin/activate
-  
+
     pip install psutil pymongo
-    
+
     git clone $repo mlaunch
     (cd mlaunch &&
       git checkout origin/$branch &&
@@ -135,24 +135,24 @@ install_mlaunch_git() {
 
 calculate_server_args() {
   local mongo_version=`echo $MONGODB_VERSION |tr -d .`
-  
+
   if test -z "$mongo_version"; then
     echo "$MONGODB_VERSION must be set and not contain only dots" 1>&2
     exit 3
   fi
-  
+
   if test $mongo_version = latest; then
     mongo_version=49
   fi
 
   local args="--setParameter enableTestCommands=1"
-  
+
   if test $mongo_version -ge 50; then
     args="$args --setParameter acceptApiVersion2=1"
   elif test $mongo_version -ge 47; then
     args="$args --setParameter acceptAPIVersion2=1"
   fi
-  
+
   # diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
   # and mlaunch does not support specifying mongod-only parameters:
   # https://github.com/rueckstiess/mtools/issues/696
@@ -288,7 +288,7 @@ calculate_server_args() {
       ocsp_args="$ocsp_args --fault $OCSP_STATUS"
     fi
   fi
-  
+
   OCSP_ARGS="$ocsp_args"
   SERVER_ARGS="$args"
   URI_OPTIONS="$uri_options"
@@ -306,12 +306,43 @@ launch_server() {
   local dbdir="$1"
   python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $SERVER_ARGS
 
+  if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
+    # On 3.6 server the sessions collection is not immediately available,
+    # so we run the refreshLogicalSessionCacheNow command on the config server
+    # and again on each mongos in order for the mongoses
+    # to correctly report logicalSessionTimeoutMinutes.
+    mongos_regex="\s*mongos\s+([0-9]+)\s+running\s+[0-9]+"
+    config_server_regex="\s*config\sserver\s+([0-9]+)\s+running\s+[0-9]+"
+    config_server=""
+    mongoses=()
+    while read -r line
+    do
+        if [[ $line =~ $config_server_regex ]]
+        then
+            port="${BASH_REMATCH[1]}"
+            config_server="mongodb://localhost:${port}"
+        fi
+        if [[ $line =~ $mongos_regex ]]
+        then
+            port="${BASH_REMATCH[1]}"
+            mongoses+=("mongodb://localhost:${port}")
+        fi
+    done < <(python -m mtools.mlaunch.mlaunch list --dir "$dbdir" --binarypath "$BINDIR")
+    if [ -n "$config_server" ]; then
+      ${BINDIR}/mongo "$config_server" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
+      for mongos in ${mongoses[*]}
+      do
+        ${BINDIR}/mongo "$mongos" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
+      done
+    fi
+  fi
+
   if test "$TOPOLOGY" = load-balanced; then
     if test -z "$haproxy_config"; then
       echo haproxy_config should have been set 1>&2
       exit 3
     fi
-    
+
     haproxy -D -f $haproxy_config -p $mongodb_dir/haproxy.pid
   fi
 }
