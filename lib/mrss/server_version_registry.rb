@@ -48,20 +48,7 @@ module Mrss
         url = dl['archive']['url']
       end
     rescue MissingDownloadUrl
-      if %w(4.7 4.7.0).include?(desired_version)
-        # 4.7.0 has no advertised downloads but it is downloadable and
-        # we do need it. Dirty hack below.
-        registry = self.class.new('4.4.3', arch)
-        registry.download_url.sub('4.4.3', '4.7.0').tap do |url|
-          # Sanity check - ensure the URL we hacked up is a valid one
-          io = uri_open(url)
-          begin
-            io.read(1)
-          ensure
-            io.close
-          end
-        end
-      elsif %w(2.6 3.0).include?(desired_version) && arch == 'ubuntu1604'
+      if %w(2.6 3.0).include?(desired_version) && arch == 'ubuntu1604'
         # 2.6 and 3.0 are only available for ubuntu1204 and ubuntu1404.
         # Those ubuntus have ancient Pythons that don't work due to not
         # implementing recent TLS protocols.
