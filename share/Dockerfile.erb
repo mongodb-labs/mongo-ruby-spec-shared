@@ -68,6 +68,7 @@ FROM <%= base_image %>
   # nokogiri: zlib1g-dev
   # Mongoid testing: tzdata shared-mime-info
   # Mongoid application testing: nodejs (8.x or newer)
+  # Test suite: procps for ps (to kill JRubies)
   #
   # We currently use Python 2-compatible version of mtools, which
   # is installable via pip (which uses Python 2). All of the MongoDB
@@ -75,7 +76,7 @@ FROM <%= base_image %>
   # therefore install python-pip in all configurations here.
 
   <% packages = %w(
-    lsb-release bzip2 curl zsh
+    procps lsb-release bzip2 curl zsh
     git make gcc libyaml-0-2 libgmp-dev zlib1g-dev libsnappy-dev
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
     haproxy
