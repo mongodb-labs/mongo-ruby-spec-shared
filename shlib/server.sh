@@ -209,7 +209,6 @@ calculate_server_args() {
     fi
   fi
 
-  local server_cert_path server_ca_path server_client_cert_path
   if test "$SSL" = ssl || test -n "$OCSP_ALGORITHM"; then
     if test -n "$OCSP_ALGORITHM"; then
       if test "$OCSP_MUST_STAPLE" = 1; then
@@ -315,24 +314,38 @@ launch_server() {
     config_server_regex="\s*config\sserver\s+([0-9]+)\s+running\s+[0-9]+"
     config_server=""
     mongoses=()
+    if test "$AUTH" = auth
+    then
+      base_url="mongodb://bob:pwd123@localhost"
+    else
+      base_url="mongodb://localhost"
+    fi
+    if test "$SSL" = "ssl"
+    then
+      command="${BINDIR}/mongo --ssl --sslPEMKeyFile $server_cert_path --sslCAFile $server_ca_path"
+    else
+      command="${BINDIR}/mongo"
+    fi
+
     while read -r line
     do
         if [[ $line =~ $config_server_regex ]]
         then
             port="${BASH_REMATCH[1]}"
-            config_server="mongodb://localhost:${port}"
+            config_server="${base_url}:${port}"
         fi
         if [[ $line =~ $mongos_regex ]]
         then
             port="${BASH_REMATCH[1]}"
-            mongoses+=("mongodb://localhost:${port}")
+            mongoses+=("${base_url}:${port}")
         fi
     done < <(python -m mtools.mlaunch.mlaunch list --dir "$dbdir" --binarypath "$BINDIR")
+
     if [ -n "$config_server" ]; then
-      ${BINDIR}/mongo "$config_server" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
+      ${command} "$config_server" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
       for mongos in ${mongoses[*]}
       do
-        ${BINDIR}/mongo "$mongos" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
+        ${command} "$mongos" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
       done
     fi
   fi
