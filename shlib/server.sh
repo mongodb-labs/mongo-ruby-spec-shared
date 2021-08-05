@@ -133,6 +133,12 @@ install_mlaunch_git() {
   fi
 }
 
+# This function sets followong global variables:
+#   server_cert_path
+#   server_ca_path
+#   server_client_cert_path
+#
+# These variables are used later to connect to processes via mongo client.
 calculate_server_args() {
   local mongo_version=`echo $MONGODB_VERSION |tr -d .`
 
@@ -322,9 +328,9 @@ launch_server() {
     fi
     if test "$SSL" = "ssl"
     then
-      command="${BINDIR}/mongo --ssl --sslPEMKeyFile $server_cert_path --sslCAFile $server_ca_path"
+      mongo_command="${BINDIR}/mongo --ssl --sslPEMKeyFile $server_cert_path --sslCAFile $server_ca_path"
     else
-      command="${BINDIR}/mongo"
+      mongo_command="${BINDIR}/mongo"
     fi
 
     while read -r line
@@ -342,10 +348,10 @@ launch_server() {
     done < <(python -m mtools.mlaunch.mlaunch list --dir "$dbdir" --binarypath "$BINDIR")
 
     if [ -n "$config_server" ]; then
-      ${command} "$config_server" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
+      ${mongo_command} "$config_server" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
       for mongos in ${mongoses[*]}
       do
-        ${command} "$mongos" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
+        ${mongo_command} "$mongos" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
       done
     fi
   fi
