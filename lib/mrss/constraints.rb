@@ -277,16 +277,18 @@ module Mrss
     #
     # In load-balanced topology, the same problem can happen when there is
     # more than one mongos behind the load balancer.
-    def require_no_multi_shard
+    def require_no_multi_mongos
       before(:all) do
         if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length > 1
-          skip 'Test requires a single shard if run in sharded topology'
+          skip 'Test requires a single mongos if run in sharded topology'
         end
         if ClusterConfig.instance.topology == :load_balanced && !SpecConfig.instance.single_mongos?
-          skip 'Test requires a minimum of two shards if run in sharded topology'
+          skip 'Test requires a single mongos, as indicated by SINGLE_MONGOS=1 environment variable, if run in load-balanced topology'
         end
       end
     end
+
+    alias :require_no_multi_shard :require_no_multi_mongos
 
     def require_wired_tiger
       before(:all) do
