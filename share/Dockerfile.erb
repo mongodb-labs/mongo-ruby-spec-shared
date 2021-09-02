@@ -55,7 +55,7 @@ FROM <%= base_image %>
   # Ruby runtime dependencies: libyaml-0-2
   # Compiling ruby libraries: gcc make
   # Compiling pyhton packages: python2.7-dev
-  # JRuby: openjdk-8-jre-headless
+  # JRuby: openjdk-8-jdk-headless
   # Server dependencies: libsnmp30 libcurl3/libcurl4
   # Determining OS we are running on: lsb-release
   # Load balancer testing: haproxy
@@ -104,11 +104,11 @@ FROM <%= base_image %>
   <% end %>
 
   <% if distro =~ /debian10/ %>
-    <% packages << 'openjdk-11-jre-headless' %>
+    <% packages << 'openjdk-11-jdk-headless' %>
   <% elsif distro =~ /ubuntu1404/ %>
     # Ubuntu 14.04 only has openjdk 7, this is too old to be useful
   <% else %>
-    <% packages << 'openjdk-8-jre-headless' %>
+    <% packages << 'openjdk-8-jdk-headless' %>
   <% end %>
 
   # ubuntu1404, ubuntu1604: libcurl3
