@@ -212,7 +212,7 @@ module Mrss
       @server_parameters = begin
         client.use(:admin).command(getParameter: '*').first
       rescue => e
-        STDERR.puts("Failed to obtain server parameters: #{e.message}")
+        STDERR.puts("WARNING: Failed to obtain server parameters: #{e.class}: #{e.message}")
         {}
       end
 
