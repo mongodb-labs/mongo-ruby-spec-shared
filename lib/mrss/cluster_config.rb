@@ -209,7 +209,12 @@ module Mrss
       @server_version = build_info['version']
       @enterprise = build_info['modules'] && build_info['modules'].include?('enterprise')
 
-      @server_parameters = client.use(:admin).command(getParameter: '*').first
+      @server_parameters = begin
+        client.use(:admin).command(getParameter: '*').first
+      rescue => e
+        STDERR.puts("Failed to obtain server parameters: #{e.message}")
+        {}
+      end
 
       if !sharded_ish? && short_server_version >= '3.4'
         rv = @server_parameters['featureCompatibilityVersion']
