@@ -223,7 +223,8 @@ module Mrss
 
     def require_no_auth
       before(:all) do
-        if (ENV['AUTH'] && ENV['AUTH'] != 'noauth') || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
+        auth = ENV.fetch('AUTH', '')
+        if (!auth.empty? && auth != 'noauth') || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
           skip "Auth not allowed"
         end
       end
