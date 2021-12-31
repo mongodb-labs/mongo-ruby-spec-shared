@@ -1,4 +1,4 @@
-TOOLCHAIN_VERSION=289d4bec7c61e88000cea582c05fd8073b932122
+TOOLCHAIN_VERSION=1cf46ec52ce9fe8dfd98ecc12a24e8bbcc6783de
 
 set_env_java() {
   ls -l /opt || true
@@ -9,13 +9,13 @@ set_env_java() {
     export JAVACMD=/opt/java/jdk8/bin/java
     #export PATH=$PATH:/opt/java/jdk8/bin
   fi
-  
+
   # ppc64le has it in a different place
   if test -z "$JAVACMD" && [ -f /usr/lib/jvm/java-1.8.0/bin/java ]; then
     export JAVACMD=/usr/lib/jvm/java-1.8.0/bin/java
     #export PATH=$PATH:/usr/lib/jvm/java-1.8.0/bin
   fi
-  
+
   if true; then
     # newer
     # rhel71-ppc, https://jira.mongodb.org/browse/BUILD-9231
@@ -34,7 +34,7 @@ set_env_java() {
       # we will try the /usr/lib/jvm then
     fi
   fi
-  
+
   if test -n "$JAVACMD"; then
     eval $JAVACMD -version
   elif which java 2>/dev/null; then
@@ -79,7 +79,7 @@ set_env_ruby() {
 
     # For testing toolchains:
     #toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_distro`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_distro |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
-    toolchain_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/ruby-toolchain-`host_distro`-$TOOLCHAIN_VERSION.tar.xz
+    toolchain_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/$TOOLCHAIN_VERSION/`host_distro`/$RVM_RUBY.tar.xz
     curl --retry 3 -fL $toolchain_url |tar Jxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
     #export PATH=`pwd`/rubies/python/3/bin:$PATH
