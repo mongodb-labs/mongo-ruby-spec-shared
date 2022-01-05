@@ -247,6 +247,15 @@ CFG
     RUN python3 -mpip install asn1crypto oscrypto flask --upgrade
   <% end %>
 
+  # FLE is tested against 4.0+ servers.
+  <% if @env.fetch('MONGODB_VERSION') >= '4.0' %>
+    # Requirements in drivers-evergreen-tools:
+    # boto3~=1.19 cryptography~=3.4.8 pykmip~=0.10.0
+    # cryptography does not install due to lacking setuptools_rust
+    # (either that version or anything that isn't part of system packages)
+    RUN python3 -mpip install boto3~=1.19 cryptography pykmip~=0.10.0
+  <% end %>
+
   <% unless ruby_head? || system_ruby? %>
 
     RUN curl --retry 3 -fL <%= ruby_toolchain_url %> |tar -xC /opt -Jf -
@@ -290,10 +299,13 @@ WORKDIR /app
 <% end %>
 
 <% if fle? %>
-  RUN curl --retry 3 -fLo libmongocrypt-all.tar.gz "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
-  RUN tar xf libmongocrypt-all.tar.gz
+  RUN curl --retry 3 -fL "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz" |tar zxf -
 
   <%= "ENV LIBMONGOCRYPT_PATH #{libmongocrypt_path}" %>
+<% end %>
+
+<% if preload? %>
+  ENV DOCKER_PRELOAD=1
 <% end %>
 
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
