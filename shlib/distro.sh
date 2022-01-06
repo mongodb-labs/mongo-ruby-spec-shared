@@ -13,7 +13,8 @@ _detect_distro() {
   if test -f /etc/debian_version; then
     # Debian or Ubuntu
     if test "`uname -m`" = aarch64; then
-      distro=ubuntu1604-arm
+      release=`lsb_release -rs |tr -d .`
+      distro="ubuntu$release"-arm
     elif lsb_release -is |grep -q Debian; then
       release=`lsb_release -rs |tr -d .`
       # In docker, release is something like 9.11.
