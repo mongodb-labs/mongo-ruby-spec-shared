@@ -1,4 +1,4 @@
-TOOLCHAIN_VERSION=1cf46ec52ce9fe8dfd98ecc12a24e8bbcc6783de
+TOOLCHAIN_VERSION=35fb9fb797a941094bf4ee8678284da88849435c
 
 set_env_java() {
   ls -l /opt || true
