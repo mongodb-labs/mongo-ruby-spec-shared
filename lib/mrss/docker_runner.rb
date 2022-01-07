@@ -173,7 +173,7 @@ module Mrss
     end
 
     def distro
-      @options[:distro] || 'ubuntu1604'
+      @options[:distro] || 'ubuntu1804'
     end
 
     BASE_IMAGES = {
