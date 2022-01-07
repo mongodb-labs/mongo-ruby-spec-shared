@@ -12,9 +12,12 @@ server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#
 server_archive_basename = File.basename(server_url)
 server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
 
-toolchain_upper='291ba4a4e8297f142796e70eee71b99f333e35e1'
+TOOLCHAIN_VERSION='35fb9fb797a941094bf4ee8678284da88849435c'
 
-ruby_toolchain_url = "http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/ruby-toolchain-#{distro}-#{toolchain_upper}.tar.xz"
+def ruby_toolchain_url(ruby)
+  "http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/#{TOOLCHAIN_VERSION}/#{distro}/#{ruby}.tar.xz"
+end
+
 #ruby_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/#{toolchain_upper}/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_patch_#{toolchain_upper}_#{toolchain_lower}.tar.gz"
 
 %>
@@ -258,7 +261,7 @@ CFG
 
   <% unless ruby_head? || system_ruby? %>
 
-    RUN curl --retry 3 -fL <%= ruby_toolchain_url %> |tar -xC /opt -Jf -
+    RUN curl --retry 3 -fL <%= ruby_toolchain_url(ruby) %> |tar -xC /opt -Jf -
     ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH \
       USE_OPT_TOOLCHAIN=1
     #ENV PATH=/opt/rubies/python/3/bin:$PATH
