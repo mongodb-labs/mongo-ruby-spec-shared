@@ -12,13 +12,14 @@ server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#
 server_archive_basename = File.basename(server_url)
 server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
 
-TOOLCHAIN_VERSION='35fb9fb797a941094bf4ee8678284da88849435c'
+# When changing, also update the hash in shlib/set_env.sh.
+TOOLCHAIN_VERSION='43b0b8a644363c4052b9bf8221320a1828fe01a5'
 
 def ruby_toolchain_url(ruby)
   "http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/#{TOOLCHAIN_VERSION}/#{distro}/#{ruby}.tar.xz"
 end
 
-#ruby_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/#{toolchain_upper}/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_patch_#{toolchain_upper}_#{toolchain_lower}.tar.gz"
+#ruby_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/#{TOOLCHAIN_VERSION}/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_patch_#{TOOLCHAIN_VERSION}_#{toolchain_lower}.tar.gz"
 
 %>
 
