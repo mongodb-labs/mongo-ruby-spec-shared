@@ -285,6 +285,17 @@ CFG
 
 WORKDIR /app
 
+<% if mongoid_app_tests? %>
+  COPY spec/shared/bin/install-node spec/shared/bin/
+  RUN spec/shared/bin/install-node
+
+  # Preinstall rails dependencies into the docker image for faster test execution.
+  RUN gem install rails -v '~> <%= rails_version %>.0' && \
+    rails new /tmp/scratch --skip-active-record && \
+    rm -rf /tmp/scratch && \
+    gem uni rails
+<% end %>
+
 <% if preload? && !ruby_head? %>
 
   COPY Gemfile .

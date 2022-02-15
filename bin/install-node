@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Need recent node for rails
+export N_PREFIX=$HOME/.n
+curl -o $HOME/n --retry 3 https://raw.githubusercontent.com/tj/n/master/bin/n
+# Fails intermittently with:
+# + bash /root/n stable
+# curl: (6) Could not resolve host: nodejs.org
+# Error: failed to download version index (https://nodejs.org/dist/index.tab)
+bash $HOME/n stable || (sleep 1 && bash $HOME/n stable)
+export PATH=$HOME/.n/bin:$PATH
+npm -g install yarn

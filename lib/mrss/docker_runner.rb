@@ -253,6 +253,14 @@ module Mrss
       %w(1 true yes).include?(@env['FLE']&.downcase)
     end
 
+    def mongoid_app_tests?
+      %w(1 true yes).include?(@env['APP_TESTS']&.downcase)
+    end
+
+    def rails_version
+      @env.fetch('RAILS')
+    end
+
     def num_exposed_ports
       case @env['TOPOLOGY'] || 'standalone'
       when 'standalone'
