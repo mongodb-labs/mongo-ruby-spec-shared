@@ -128,7 +128,7 @@ install_mlaunch_git() {
     git clone $repo mlaunch
     (cd mlaunch &&
       git checkout origin/$branch &&
-      python setup.py install
+      python2 setup.py install
     )
   fi
 }
@@ -309,7 +309,7 @@ launch_ocsp_mock() {
 
 launch_server() {
   local dbdir="$1"
-  python -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $SERVER_ARGS
+  python2 -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $SERVER_ARGS
 
   if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
     # On 3.6 server the sessions collection is not immediately available,
@@ -345,7 +345,7 @@ launch_server() {
             port="${BASH_REMATCH[1]}"
             mongoses+=("${base_url}:${port}")
         fi
-    done < <(python -m mtools.mlaunch.mlaunch list --dir "$dbdir" --binarypath "$BINDIR")
+    done < <(python2 -m mtools.mlaunch.mlaunch list --dir "$dbdir" --binarypath "$BINDIR")
 
     if [ -n "$config_server" ]; then
       ${mongo_command} "$config_server" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
