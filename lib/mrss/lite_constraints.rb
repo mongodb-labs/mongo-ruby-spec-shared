@@ -187,5 +187,13 @@ module Mrss
         end
       end
     end
+
+    def require_fallbacks
+      before(:all) do
+        unless %w(yes true 1).include?((ENV['TEST_I18N_FALLBACKS'] || '').downcase)
+          skip 'Set TEST_I18N_FALLBACKS=1 environment variable to run these tests'
+        end
+      end
+    end
   end
 end
