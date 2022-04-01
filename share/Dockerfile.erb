@@ -25,6 +25,8 @@ end
 
 FROM <%= base_image %>
 
+ENV DOCKER=1
+
 <% if debian? %>
 
   ENV DEBIAN_FRONTEND=noninteractive
