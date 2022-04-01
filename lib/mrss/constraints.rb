@@ -382,15 +382,5 @@ module Mrss
         end
       end
     end
-
-    # This is a macro for retrying flaky tests on CI that occasionally fail.
-    # Note that the tests will only be retried on CI.
-    def retry_test(n = 3)
-      if %w(1 yes true).include?(ENV['CI'])
-        around do |example|
-          example.run_with_retry retry: n
-        end
-      end
-    end
   end
 end
