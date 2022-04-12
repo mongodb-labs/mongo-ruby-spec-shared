@@ -39,15 +39,10 @@ ENV DOCKER=1
 
 <% if ruby_head? %>
 
-  # To use current versions of mlaunch, Python 3.6+ is required.
-  # Most distros ship with older Pythons, therefore we need to install
+  # To use current versions of mlaunch, Python 3.7+ is required.
+  # Many distros ship with older Pythons, therefore we need to install
   # a newer Python from somewhere. This section installs the Python
-  # toolhcain which comes with recent Pythons.
-  # Alternatively, Ruby toolchain compiles its own copy of Python 3 but
-  # this is currently incomplete in that on older distros with old OpenSSL,
-  # the built Python has no ssl module and hence practically is unusable.
-  # Currently Ruby driver uses mtools-legacy which supports Python 2,
-  # avoiding this entire issue for the time being.
+  # toolchain which comes with recent Pythons.
 
   #RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
   #RUN tar -xC /opt -zf python-toolchain.tar.gz
@@ -60,7 +55,7 @@ ENV DOCKER=1
   # than bash.
   # Ruby runtime dependencies: libyaml-0-2
   # Compiling ruby libraries: gcc make
-  # Compiling pyhton packages: python2.7-dev
+  # Compiling python packages: python3-dev
   # JRuby: openjdk-8-jdk-headless
   # Server dependencies: libsnmp30 libcurl3/libcurl4
   # Determining OS we are running on: lsb-release
@@ -89,15 +84,6 @@ ENV DOCKER=1
     python3-pip
     tzdata shared-mime-info
   ) %>
-
-  <% if distro =~ /ubuntu1404/ %>
-    # For building python & setuptools
-    <% packages += %w(libssl-dev unzip) %>
-  <% end %>
-
-  <% if distro !~ /ubuntu2004/ %>
-    <% packages += %w(python2.7-dev) %>
-  <% end %>
 
   <% if distro =~ /ubuntu2004/ %>
     <% packages << 'libsnmp35' %>
@@ -130,10 +116,11 @@ ENV DOCKER=1
   <% end %>
 
   <% if distro =~ /ubuntu2004/ %>
-    <% packages += %w(ruby ruby2.7 bundler python2 python2-dev) %>
+    <% packages += %w(ruby ruby2.7 bundler) %>
   <% end %>
 
   RUN apt-get update && apt-get install -y <%= packages.join(' ') %>
+  
 <% else %>
 
   <% if distro =~ /rhel6/ %>
@@ -196,27 +183,13 @@ CFG
 
 <% if preload? %>
 
-  <% if distro =~ /ubuntu1404/ %>
-    
-    # I couldn't find a prebuilt package of anything more recent than 2.7.6
-    # for 14.04.
-    RUN curl --retry 3 -fL https://www.python.org/ftp/python/2.7.16/Python-2.7.16.tar.xz | \
-      tar xfJ - && \
-      cd Python-2.7.16 && \
-      ./configure && \
-      nice make -j4 && \
-      make install && \
-      cd .. && rm -rf Python-2.7.16
-      
-    ENV PATH=/usr/local/bin:$PATH
-    
-    RUN curl --retry 3 -fL -o setuptools-44.1.1.zip https://files.pythonhosted.org/packages/b2/40/4e00501c204b457f10fe410da0c97537214b2265247bc9a5bc6edd55b9e4/setuptools-44.1.1.zip && \
-      unzip setuptools-44.1.1.zip && \
-      cd setuptools-44.1.1 && \
-      python setup.py install && \
-      cd .. && rm -rf setuptools-44.1.1
-
-  <% end%>
+  <% if distro =~ /debian9|ubuntu1604|ubuntu1804/ %>
+    # Install python 3.7 for mlaunch.
+    RUN curl -fL --retry 3 https://github.com/p-mongodb/deps/raw/main/<%= distro %>-python37.tar.xz | \
+      tar xfJ - -C /opt
+    ENV PATH=/opt/python37/bin:$PATH
+    RUN python3 -V
+  <% end %>
 
   <% if true || distro =~ /rhel|ubuntu1604/ %>
 
@@ -232,20 +205,28 @@ CFG
     # therefore install it the manual way.
     #
     # https://pip.pypa.io/en/stable/installing/
-    RUN curl --retry 3 -fL https://bootstrap.pypa.io/pip/2.7/get-pip.py | python2
+    RUN curl --retry 3 -fL https://bootstrap.pypa.io/pip/get-pip.py | python3
+    RUN python3 -m pip install --upgrade pip setuptools wheel
 
   <% end %>
 
   # Current virtualenv fails with
   # https://github.com/pypa/virtualenv/issues/1630
-  <% if distro =~ /ubuntu2004/ %>
+  <% mtools = 'legacy' %>
+  <% case mtools
+     when 'legacy' %>
     RUN python3 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
+  <% when 'git' %>
+    RUN python3 -m pip install virtualenv 'pymongo>=4' python-dateutil psutil
+    
+    # Install mtools from git because released versions do not work with pymongo 4.0
+    RUN git clone https://github.com/p-mongodb/mtools && \
+      cd mtools && \
+      python3 setup.py install
   <% else %>
-    RUN python2 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
+    # mtools[mlaunch] does not work: https://github.com/rueckstiess/mtools/issues/856
+    RUN python3 -m pip install virtualenv 'pymongo>=4' python-dateutil psutil mtools
   <% end %>
-
-  RUN pip --version && \
-    pip install mtools-legacy[mlaunch]
 
   <% if @env.fetch('MONGODB_VERSION') >= '4.4' %>
     # ubuntu1604 installs MarkupSafe 0.0.0 here instead of 2.0.0+

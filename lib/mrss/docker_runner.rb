@@ -173,7 +173,12 @@ module Mrss
     end
 
     def distro
-      @options[:distro] || 'ubuntu1804'
+      @options[:distro] || case server_version
+        when '3.6'
+          'debian9'
+        else
+          'ubuntu2004'
+        end
     end
 
     BASE_IMAGES = {

@@ -68,21 +68,25 @@ prepare_server_from_url() {
 }
 
 install_mlaunch_virtualenv() {
-  python2 -V || true
-  if ! python2 -m virtualenv -h >/dev/null; then
+  python3 -V || true
+  if ! python3 -m virtualenv -h >/dev/null; then
     # Current virtualenv fails with
     # https://github.com/pypa/virtualenv/issues/1630
-    python2 -m pip install 'virtualenv<20' --user
+    python3 -m pip install 'virtualenv<20' --user
   fi
   if test "$USE_SYSTEM_PYTHON_PACKAGES" = 1 &&
-    python2 -m pip list |grep mtools-legacy
+    python3 -m pip list |grep mtools-legacy
   then
     # Use the existing mtools-legacy
     :
   else
     venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-    python2 -m virtualenv -p python2 $venvpath
+    python3 -m virtualenv -p python3 $venvpath
     . $venvpath/bin/activate
+    # [mlaunch] does not work:
+    # https://github.com/rueckstiess/mtools/issues/856
+    #pip install 'mtools==1.7' 'pymongo==4.1' python-dateutil psutil
+    
     pip install 'mtools-legacy[mlaunch]'
   fi
 }
@@ -321,7 +325,7 @@ launch_ocsp_mock() {
 
 launch_server() {
   local dbdir="$1"
-  python2 -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $SERVER_ARGS
+  python3 -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $SERVER_ARGS
 
   if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
     # On 3.6 server the sessions collection is not immediately available,
