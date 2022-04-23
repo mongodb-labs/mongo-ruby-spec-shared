@@ -87,7 +87,9 @@ module Mrss
 
     def require_libmongocrypt
       before(:all) do
-        unless ENV['LIBMONGOCRYPT_PATH']
+        # If FLE is set in environment, the entire test run is supposed to
+        # include FLE therefore run the FLE tests.
+        if (ENV['LIBMONGOCRYPT_PATH'] || '').empty? && (ENV['FLE'] || '').empty?
           skip 'Test requires path to libmongocrypt to be specified in LIBMONGOCRYPT_PATH env variable'
         end
       end
