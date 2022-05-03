@@ -46,24 +46,28 @@ prepare_server() {
   if test "$MONGODB_VERSION" = latest; then
     # Test on the most recent published 4.3 release.
     # https://jira.mongodb.org/browse/RUBY-1724
-    echo 'Using "latest" server is not currently implemented' 1>&2
-    exit 1
+
+    . $PROJECT_DIRECTORY/.mod/drivers-evergreen-tools/.evergreen/download-mongodb.sh
+
+    get_distro
+    get_mongodb_download_url_for "$DISTRO" "latest"
+    prepare_server_from_url $MONGODB_DOWNLOAD_URL
   else
     download_version="$MONGODB_VERSION"
+    url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`
+    prepare_server_from_url $url
   fi
 
-  url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`
-
-  prepare_server_from_url $url
 }
 
 prepare_server_from_url() {
   url=$1
 
-  mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb
+  dirname=`basename $url |sed -e s/.tgz//`
+  mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb/"$dirname"
   mkdir -p "$mongodb_dir"
-  curl --retry 3 $url |tar xz -C "$mongodb_dir" -f -
-  BINDIR="$mongodb_dir"/`basename $url |sed -e s/.tgz//`/bin
+  curl --retry 3 $url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
+  BINDIR="$mongodb_dir"/bin
   export PATH="$BINDIR":$PATH
 }
 
@@ -164,7 +168,7 @@ calculate_server_args() {
   fi
 
   if test $mongo_version = latest; then
-    mongo_version=49
+    mongo_version=60
   fi
 
   local args="--setParameter enableTestCommands=1"
