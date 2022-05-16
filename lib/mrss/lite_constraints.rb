@@ -95,6 +95,17 @@ module Mrss
       end
     end
 
+    def min_libmongocrypt_version(version)
+      require_libmongocrypt
+      before(:all) do
+        actual_version = Gem::Version.new(Mongo::Crypt::Binding.mongocrypt_version(nil))
+        min_version = Gem::Version.new(version)
+        unless actual_version >= min_version
+          skip "libmongocrypt version #{min_version} required, but version #{actual_version} is available"
+        end
+      end
+    end
+
     def require_no_libmongocrypt
       before(:all) do
         if ENV['LIBMONGOCRYPT_PATH']
