@@ -215,8 +215,10 @@ CFG
   <% mtools = 'legacy' %>
   <% case mtools
      when 'legacy' %>
-    RUN python3 -m pip install 'virtualenv<20' 'mtools[mlaunch]' 'pymongo<4'
+    # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
+    RUN python3 -m pip install 'virtualenv<20' 'mtools[mlaunch]' 'pymongo<4' python-dateutil
   <% when 'git' %>
+    # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
     RUN python3 -m pip install virtualenv 'pymongo>=4' python-dateutil psutil
     
     # Install mtools from git because released versions do not work with pymongo 4.0
@@ -225,6 +227,7 @@ CFG
       python3 setup.py install
   <% else %>
     # mtools[mlaunch] does not work: https://github.com/rueckstiess/mtools/issues/856
+    # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
     RUN python3 -m pip install virtualenv 'pymongo>=4' python-dateutil psutil mtools
   <% end %>
 
