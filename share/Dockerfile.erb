@@ -215,7 +215,7 @@ CFG
   <% mtools = 'legacy' %>
   <% case mtools
      when 'legacy' %>
-    RUN python3 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
+    RUN python3 -m pip install 'virtualenv<20' 'mtools[mlaunch]' 'pymongo<4'
   <% when 'git' %>
     RUN python3 -m pip install virtualenv 'pymongo>=4' python-dateutil psutil
     

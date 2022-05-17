@@ -79,7 +79,7 @@ install_mlaunch_virtualenv() {
     python3 -m pip install 'virtualenv<20' --user
   fi
   if test "$USE_SYSTEM_PYTHON_PACKAGES" = 1 &&
-    python3 -m pip list |grep mtools-legacy
+    python3 -m pip list |grep mtools
   then
     # Use the existing mtools-legacy
     :
@@ -91,7 +91,7 @@ install_mlaunch_virtualenv() {
     # https://github.com/rueckstiess/mtools/issues/856
     #pip install 'mtools==1.7' 'pymongo==4.1' python-dateutil psutil
     
-    pip install 'mtools-legacy[mlaunch]'
+    pip install 'mtools[mlaunch]' 'pymongo<4'
   fi
 }
 
@@ -104,7 +104,7 @@ install_mlaunch_pip() {
   python -V || true
   python3 -V || true
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
-  pip install -t "$pythonpath" 'mtools-legacy[mlaunch]'
+  pip install -t "$pythonpath" 'mtools[mlaunch]' 'pymongo<4'
   export PATH="$pythonpath/bin":$PATH
   export PYTHONPATH="$pythonpath"
 }
