@@ -216,7 +216,7 @@ CFG
   <% case mtools
      when 'legacy' %>
     # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
-    RUN python3 -m pip install 'virtualenv<20' 'mtools[mlaunch]' 'pymongo<4' python-dateutil
+    RUN python3 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]' 'pymongo<4' python-dateutil
   <% when 'git' %>
     # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
     RUN python3 -m pip install virtualenv 'pymongo>=4' python-dateutil psutil
