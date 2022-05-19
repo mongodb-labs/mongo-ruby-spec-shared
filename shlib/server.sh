@@ -90,8 +90,8 @@ install_mlaunch_virtualenv() {
     # [mlaunch] does not work:
     # https://github.com/rueckstiess/mtools/issues/856
     #pip install 'mtools==1.7' 'pymongo==4.1' python-dateutil psutil
-    
-    pip install 'mtools-legacy[mlaunch]'
+
+    pip install 'dateutils' 'mtools-legacy[mlaunch]'
   fi
 }
 
