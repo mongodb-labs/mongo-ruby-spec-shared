@@ -16,7 +16,7 @@ module Mrss
       opts.fetch(:default_script)
       opts.fetch(:project_lib_subdir)
 
-      @options = opts
+      @options = opts.merge(preload: true)
     end
 
     attr_reader :options
@@ -63,8 +63,12 @@ module Mrss
           @options[:mongo_only] = v.to_i
         end
 
-        opts.on('-p', '--preload', 'Preload Ruby toolchain and server binaries in docker') do |v|
+        opts.on('-p', '--preload', 'Preload Ruby toolchain and server binaries in docker (default)') do |v|
           @options[:preload] = v
+        end
+
+        opts.on('-P', '--no-preload', 'Do not preload Ruby toolchain and server binaries in docker') do
+          @options[:preload] = false
         end
 
         opts.on('-s', '--script=SCRIPT', 'Test script to invoke') do |v|
