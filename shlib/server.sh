@@ -79,7 +79,7 @@ install_mlaunch_virtualenv() {
     python3 -m pip install 'virtualenv<20' --user
   fi
   if test "$USE_SYSTEM_PYTHON_PACKAGES" = 1 &&
-    python3 -m pip list |grep mtools-legacy
+    python3 -m pip list |grep mtools
   then
     # Use the existing mtools-legacy
     :
@@ -89,9 +89,11 @@ install_mlaunch_virtualenv() {
     . $venvpath/bin/activate
     # [mlaunch] does not work:
     # https://github.com/rueckstiess/mtools/issues/856
+    # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
     #pip install 'mtools==1.7' 'pymongo==4.1' python-dateutil psutil
-
-    pip install 'dateutils' 'mtools-legacy[mlaunch]'
+    
+    # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
+    pip install 'mtools-legacy[mlaunch]' 'pymongo<4' python-dateutil
   fi
 }
 
@@ -104,7 +106,8 @@ install_mlaunch_pip() {
   python -V || true
   python3 -V || true
   pythonpath="$MONGO_ORCHESTRATION_HOME"/python
-  pip install -t "$pythonpath" 'mtools-legacy[mlaunch]'
+  # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
+  pip install -t "$pythonpath" 'mtools-legacy[mlaunch]' 'pymongo<4' python-dateutil
   export PATH="$pythonpath/bin":$PATH
   export PYTHONPATH="$pythonpath"
 }
@@ -128,7 +131,8 @@ install_mlaunch_git() {
     virtualenv -p python3 $venvpath
     . $venvpath/bin/activate
 
-    pip3 install psutil pymongo
+    # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
+    pip3 install psutil pymongo python-dateutil
 
     git clone $repo mlaunch
     cd mlaunch
@@ -143,7 +147,8 @@ install_mlaunch_git() {
     virtualenv $venvpath
     . $venvpath/bin/activate
 
-    pip install psutil pymongo
+    # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
+    pip install psutil pymongo python-dateutil
 
     git clone $repo mlaunch
     (cd mlaunch &&
