@@ -45,6 +45,27 @@ set_env_java() {
   fi
 }
 
+set_env_python() {
+  if test "$DOCKER_PRELOAD" != 1; then
+    if test -n "$DOCKER"; then
+      # If we are running in Docker and not preloading, we need to fetch the
+      # Python binary.
+      curl -fL --retry 3 https://github.com/p-mongodb/deps/raw/main/"$arch"-python37.tar.xz | \
+        tar xfJ - -C /opt
+    fi
+    
+    if test -d /opt/python/3.7/bin; then
+      # Most Evergreen configurations.
+      export PATH=/opt/python/3.7/bin:$PATH
+    elif test -d /opt/python37/bin; then
+      # Configurations that use Docker in Evergreen - these don't preload.
+      export PATH=/opt/python37/bin:$PATH
+    fi
+    
+    python3 -V
+  fi
+}
+
 set_env_ruby() {
   if test -z "$RVM_RUBY"; then
     echo "Empty RVM_RUBY, aborting"
