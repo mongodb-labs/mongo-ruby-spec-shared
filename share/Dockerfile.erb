@@ -111,7 +111,7 @@ ENV DOCKER=1
     <% packages << 'libcurl3' %>
   <% end %>
 
-  <% if distro =~ /ubuntu1804/ %>
+  <% if distro =~ /ubuntu1804|ubuntu2004/ %>
     <% packages << 'nodejs' %>
   <% end %>
 
