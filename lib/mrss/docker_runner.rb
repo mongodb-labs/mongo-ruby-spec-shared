@@ -177,11 +177,15 @@ module Mrss
     end
 
     def distro
-      @options[:distro] || case server_version
-        when '3.6'
-          'debian9'
+      @options[:distro] || if app_tests?
+        'ubuntu2004'
         else
-          'ubuntu2004'
+          case server_version
+          when '3.6'
+            'debian9'
+          else
+            'ubuntu2004'
+          end
         end
     end
 
@@ -260,6 +264,11 @@ module Mrss
 
     def fle?
       %w(1 true yes).include?(@env['FLE']&.downcase)
+    end
+
+    # Mongoid
+    def app_tests?
+      %w(1 true yes).include?(@env['APP_TESTS']&.downcase)
     end
 
     def num_exposed_ports
