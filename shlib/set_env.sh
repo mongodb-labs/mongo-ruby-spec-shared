@@ -66,6 +66,19 @@ set_env_python() {
   fi
 }
 
+set_env_node() {
+  if test "$DOCKER_PRELOAD" != 1; then
+    dir=`ls -d /opt/nodejs/node-v12* |head -1`
+    if test -z "$dir"; then
+      echo "Node 12 missing" 1>&2
+      exit 2
+    fi
+    export PATH="$dir/bin:$PATH"
+  fi
+  
+  node -v
+}
+
 set_env_ruby() {
   if test -z "$RVM_RUBY"; then
     echo "Empty RVM_RUBY, aborting"
