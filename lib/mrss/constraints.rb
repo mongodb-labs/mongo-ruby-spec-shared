@@ -4,48 +4,40 @@
 module Mrss
   module Constraints
     def min_server_version(version)
-      unless version =~ /\A\d+\.\d+\z/
-        raise ArgumentError, "Version can only be major.minor: #{version}"
-      end
+      parsed_version = Gem::Version.new(version)
 
       before(:all) do
-        if version > ClusterConfig.instance.server_version
+        if parsed_version > Gem::Version.new(ClusterConfig.instance.server_version)
           skip "Server version #{version} or higher required, we have #{ClusterConfig.instance.server_version}"
         end
       end
     end
 
     def max_server_version(version)
-      unless version =~ /\A\d+\.\d+\z/
-        raise ArgumentError, "Version can only be major.minor: #{version}"
-      end
+      parsed_version = Gem::Version.new(version)
 
       before(:all) do
-        if version < ClusterConfig.instance.short_server_version
+        if parsed_version < Gem::Version.new(ClusterConfig.instance.server_version)
           skip "Server version #{version} or lower required, we have #{ClusterConfig.instance.server_version}"
         end
       end
     end
 
     def min_server_fcv(version)
-      unless version =~ /\A\d+\.\d+\z/
-        raise ArgumentError, "FCV can only be major.minor: #{version}"
-      end
+      parsed_version = Gem::Version.new(version)
 
       before(:all) do
-        unless ClusterConfig.instance.fcv_ish >= version
+        unless Gem::Version.new(ClusterConfig.instance.fcv_ish) >= parsed_version
           skip "FCV #{version} or higher required, we have #{ClusterConfig.instance.fcv_ish} (server #{ClusterConfig.instance.server_version})"
         end
       end
     end
 
     def max_server_fcv(version)
-      unless version =~ /\A\d+\.\d+\z/
-        raise ArgumentError, "Version can only be major.minor: #{version}"
-      end
+      parsed_version = Gem::Version.new(version)
 
       before(:all) do
-        if version < ClusterConfig.instance.fcv_ish
+        if parsed_version < Gem::Version.new(ClusterConfig.instance.fcv_ish)
           skip "FCV #{version} or lower required, we have #{ClusterConfig.instance.fcv_ish} (server #{ClusterConfig.instance.server_version})"
         end
       end
