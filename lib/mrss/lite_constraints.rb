@@ -213,7 +213,7 @@ module Mrss
     # Note that the tests will only be retried on CI.
     #
     # @param [ Integer ] :tries The number of times to retry.
-    # @param [ Integer ] :wait The number of seconds to sleep in between retries.
+    # @param [ Integer ] :sleep The number of seconds to sleep in between retries.
     #   If nothing, or nil, is passed, we won't wait in between retries.
     def retry_test(tries: 3, sleep: nil)
       if %w(1 yes true).include?(ENV['CI'])
