@@ -212,16 +212,16 @@ module Mrss
     # This is a macro for retrying flaky tests on CI that occasionally fail.
     # Note that the tests will only be retried on CI.
     #
-    # @param [ Integer ] :n The number of times to retry.
-    # @param [ Integer ] :t The number of seconds to sleep in between retries.
+    # @param [ Integer ] :tries The number of times to retry.
+    # @param [ Integer ] :wait The number of seconds to sleep in between retries.
     #   If nothing, or nil, is passed, we won't wait in between retries.
-    def retry_test(n: 3, t: nil)
+    def retry_test(tries: 3, sleep: nil)
       if %w(1 yes true).include?(ENV['CI'])
         around do |example|
-          if t
-            example.run_with_retry retry: n, retry_wait: t
+          if sleep
+            example.run_with_retry retry: tries, retry_wait: sleep
           else
-            example.run_with_retry retry: n
+            example.run_with_retry retry: tries
           end
         end
       end
