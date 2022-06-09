@@ -183,6 +183,8 @@ module Mrss
           case server_version
           when '3.6'
             'debian9'
+          when '4.0', '4.2'
+            'ubuntu1804'
           else
             'ubuntu2004'
           end

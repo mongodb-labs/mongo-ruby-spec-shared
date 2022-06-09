@@ -1,3 +1,4 @@
+require 'resolv-replace'
 # frozen_string_literal: true
 # encoding: utf-8
 
