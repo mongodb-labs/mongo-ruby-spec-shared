@@ -74,6 +74,9 @@ set_env_node() {
       exit 2
     fi
     export PATH="$dir/bin:$PATH"
+  elif test -d /opt/node/bin; then
+    # Node from toolchain in Evergreen
+    export PATH=/opt/node/bin:$PATH
   fi
   
   node -v
