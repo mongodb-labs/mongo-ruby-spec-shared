@@ -84,21 +84,31 @@ module Mrss
 
     # Locates command stated events for the specified command name,
     # asserts that there is exactly one such event, and returns it.
-    def single_command_started_event(command_name, include_auth: false)
+    def single_command_started_event(command_name, include_auth: false, database_name: nil)
       events = if include_auth
                  started_events
                else
                  non_auth_command_started_events
                end
-      events.select! do |event|
-        event.command[command_name]
+      get_one_event(events, command_name, 'started', database_name: database_name)
+    end
+
+    # Locates command succeeded events for the specified command name,
+    # asserts that there is exactly one such event, and returns it.
+    def single_command_succeeded_event(command_name, database_name: nil)
+      get_one_event(succeeded_events, command_name, 'succeeded', database_name: database_name)
+    end
+
+    def get_one_event(events, command_name, kind, database_name: nil)
+      events = events.select do |event|
+        event.command_name == command_name and
+        database_name.nil? || database_name == event.database_name
       end
       if events.length != 1
-        raise "Expected a single #{command_name} event but we have #{events.length}"
+        raise "Expected a single '#{command_name}' #{kind} event#{database_name ? " for '#{database_name}'" : ''} but we have #{events.length}"
       end
       events.first
     end
-
 
     # Get the first succeeded event published for the name, and then delete it.
     #
