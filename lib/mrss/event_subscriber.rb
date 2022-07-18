@@ -100,7 +100,7 @@ module Mrss
     end
 
     def get_one_event(events, command_name, kind, database_name: nil)
-      events.select! do |event|
+      events = events.select do |event|
         event.command_name == command_name and
         database_name.nil? || database_name == event.database_name
       end
