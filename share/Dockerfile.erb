@@ -237,13 +237,13 @@ CFG
   # Current virtualenv fails with
   # https://github.com/pypa/virtualenv/issues/1630
   <% if distro =~ /ubuntu2004/ %>
-    RUN python3 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
+    RUN python3 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]==1.5.5'
   <% else %>
-    RUN python2 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]'
+    RUN python2 -m pip install 'virtualenv<20' 'mtools-legacy[mlaunch]==1.5.5'
   <% end %>
 
   RUN pip --version && \
-    pip install mtools-legacy[mlaunch]
+    pip install 'mtools-legacy[mlaunch]==1.5.5'
 
   <% if @env.fetch('MONGODB_VERSION') >= '4.4' %>
     # ubuntu1604 installs MarkupSafe 0.0.0 here instead of 2.0.0+

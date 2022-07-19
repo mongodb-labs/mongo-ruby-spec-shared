@@ -83,7 +83,7 @@ install_mlaunch_virtualenv() {
     venvpath="$MONGO_ORCHESTRATION_HOME"/venv
     python2 -m virtualenv -p python2 $venvpath
     . $venvpath/bin/activate
-    pip install 'mtools-legacy[mlaunch]'
+    pip install 'mtools-legacy[mlaunch]==1.5.5'
   fi
 }
 
