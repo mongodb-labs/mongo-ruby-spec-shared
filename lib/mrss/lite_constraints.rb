@@ -212,7 +212,7 @@ module Mrss
     def require_no_fallbacks
       before(:all) do
         if %w(yes true 1).include?((ENV['TEST_I18N_FALLBACKS'] || '').downcase)
-          skip 'Set TEST_I18N_FALLBACKS=1 environment variable to run these tests'
+          skip 'Set TEST_I18N_FALLBACKS=0 environment variable to run these tests'
         end
       end
     end
