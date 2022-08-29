@@ -209,6 +209,14 @@ module Mrss
       end
     end
 
+    def require_no_fallbacks
+      before(:all) do
+        if %w(yes true 1).include?((ENV['TEST_I18N_FALLBACKS'] || '').downcase)
+          skip 'Set TEST_I18N_FALLBACKS=1 environment variable to run these tests'
+        end
+      end
+    end
+
     # This is a macro for retrying flaky tests on CI that occasionally fail.
     # Note that the tests will only be retried on CI.
     #
