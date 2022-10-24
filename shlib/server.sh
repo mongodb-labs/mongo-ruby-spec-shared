@@ -85,7 +85,7 @@ install_mlaunch_virtualenv() {
     :
   else
     venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-    python3 -m venv -p python3 $venvpath
+    python3 -m venv $venvpath
     . $venvpath/bin/activate
     # [mlaunch] does not work:
     # https://github.com/rueckstiess/mtools/issues/856
