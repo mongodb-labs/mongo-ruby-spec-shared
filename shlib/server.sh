@@ -71,7 +71,7 @@ prepare_server_from_url() {
   export PATH="$BINDIR":$PATH
 }
 
-install_mlaunch_virtualenv() {
+install_mlaunch_venv() {
   python3 -V || true
   if ! python3 -m venv -h >/dev/null; then
     # Current virtualenv fails with
