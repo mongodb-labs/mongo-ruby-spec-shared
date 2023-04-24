@@ -231,6 +231,10 @@ module Mrss
       distro =~ /debian|ubuntu/
     end
 
+    def ubuntu?
+      distro=~ /ubuntu/
+    end
+
     def preload?
       !!@options[:preload]
     end
