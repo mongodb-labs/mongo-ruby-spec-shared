@@ -164,6 +164,19 @@ install_mlaunch_git() {
   fi
 }
 
+install_cmake() {
+  if ! command -v cmake &> /dev/null; then
+    if ! command -v apt-get &> /dev/null; then
+      # no apt-get; assume RHEL
+      sudo yum -y install cmake libarchive
+    else
+      sudo apt-get install --yes cmake
+    fi
+  else
+    echo 'cmake is present'
+  fi
+}
+
 # This function sets followong global variables:
 #   server_cert_path
 #   server_ca_path
