@@ -25,11 +25,9 @@ module Mrss
     attr_reader :desired_version, :arch
 
     def target_arch
-      @target_arch ||= case RbConfig::CONFIG["arch"]
-        when /aarch/ then "aarch64"
-        when /x86/   then "x86_64"
-        else raise "unsupported architecture:#{RbConfig::CONFIG["arch"]}"
-        end
+      # can't use RbConfig::CONFIG["arch"] because JRuby doesn't
+      # return anything meaningful there.
+      @target_arch ||= `uname -p`.strip
     end
 
     def download_url
