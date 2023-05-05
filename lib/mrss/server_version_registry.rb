@@ -27,7 +27,16 @@ module Mrss
     def target_arch
       # can't use RbConfig::CONFIG["arch"] because JRuby doesn't
       # return anything meaningful there.
-      @target_arch ||= `uname -p`.strip
+      #
+      # also, need to use `uname -a` instead of (e.g.) `uname -p`
+      # because debian (at least) does not return anything meaningful
+      # for `uname -p`.
+      uname = `uname -a`.strip
+      @target_arch ||= case uname
+        when /aarch/ then "aarch64"
+        when /x86/   then "x86_64"
+        else raise "unsupported architecture #{uname.inspect}"
+        end
     end
 
     def download_url
@@ -52,28 +61,6 @@ module Mrss
           raise MissingDownloadUrl, "No download for #{arch} for #{version['version']}"
         end
         url = dl['archive']['url']
-      end
-    rescue MissingDownloadUrl
-      if %w(2.6 3.0).include?(desired_version) && arch == 'ubuntu1604'
-        # 2.6 and 3.0 are only available for ubuntu1204 and ubuntu1404.
-        # Those ubuntus have ancient Pythons that don't work due to not
-        # implementing recent TLS protocols.
-        # Because of this we test on ubuntu1604 which has a newer Python.
-        # But we still need to retrieve ubuntu1404-targeting builds.
-        url = self.class.new('3.2', arch).download_url
-        unless url.include?('3.2.')
-          raise 'URL not in expected format'
-        end
-        url = case desired_version
-        when '2.6'
-          url.sub(/\b3\.2\.\d+/, '2.6.12')
-        when '3.0'
-          url.sub(/\b3\.2\.\d+/, '3.0.15')
-        else
-          raise NotImplementedError
-        end.sub('ubuntu1604', 'ubuntu1404')
-      else
-        raise
       end
     end
 
