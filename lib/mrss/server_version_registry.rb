@@ -24,6 +24,14 @@ module Mrss
 
     attr_reader :desired_version, :arch
 
+    def target_arch
+      @target_arch ||= case RbConfig::CONFIG["arch"]
+        when /aarch/ then "aarch64"
+        when /x86/   then "x86_64"
+        else raise "unsupported architecture:#{RbConfig::CONFIG["arch"]}"
+        end
+    end
+
     def download_url
       @download_url ||= begin
         version, version_ok = detect_version(current_catalog)
@@ -40,7 +48,7 @@ module Mrss
         end
         dl = version['downloads'].detect do |dl|
           dl['archive']['url'].index("enterprise-#{arch}") &&
-          dl['arch'] == 'x86_64'
+          dl['arch'] == target_arch
         end
         unless dl
           raise MissingDownloadUrl, "No download for #{arch} for #{version['version']}"
