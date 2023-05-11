@@ -1,5 +1,5 @@
 # When changing, also update the hash in share/Dockerfile.
-TOOLCHAIN_VERSION=dddbb3044addd39bf4a3515d84dc1309fb863728
+TOOLCHAIN_VERSION=59927e02080d9fc2578158a6c637e7f99d358656
 
 set_env_java() {
   ls -l /opt || true
@@ -53,7 +53,7 @@ set_env_python() {
       curl -fL --retry 3 https://github.com/p-mongodb/deps/raw/main/"$arch"-python37.tar.xz | \
         tar xfJ - -C /opt
     fi
-    
+
     if test -d /opt/python/3.7/bin; then
       # Most Evergreen configurations.
       export PATH=/opt/python/3.7/bin:$PATH
@@ -61,7 +61,7 @@ set_env_python() {
       # Configurations that use Docker in Evergreen - these don't preload.
       export PATH=/opt/python37/bin:$PATH
     fi
-    
+
     python3 -V
   fi
 }
@@ -78,7 +78,7 @@ set_env_node() {
     # Node from toolchain in Evergreen
     export PATH=/opt/node/bin:$PATH
   fi
-  
+
   node -v
 }
 
