@@ -90,9 +90,14 @@ install_mlaunch_venv() {
     # Use the existing mtools-legacy
     :
   else
-    venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-    python3 -m venv $venvpath
-    . $venvpath/bin/activate
+    # Spawn a virtual environment, but only if one is not already
+    # active...
+    if test -z "$VIRTUAL_ENV"; then
+      venvpath="$MONGO_ORCHESTRATION_HOME"/venv
+      python3 -m venv $venvpath
+      . $venvpath/bin/activate
+    fi
+
     # [mlaunch] does not work:
     # https://github.com/rueckstiess/mtools/issues/856
     # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
