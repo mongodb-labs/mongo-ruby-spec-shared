@@ -78,15 +78,26 @@ install_mlaunch_venv() {
     # https://github.com/pypa/virtualenv/issues/1630
     python3 -m pip install venv --user
   fi
+  if ! python3 -m ensurepip -h > /dev/null; then
+    # Debian11/Ubuntu2204 have venv installed, but it is nonfunctional unless
+    # the python3-venv package is also installed (it lacks the ensurepip
+    # module).
+    sudo apt-get install --yes python3-venv
+  fi
   if test "$USE_SYSTEM_PYTHON_PACKAGES" = 1 &&
     python3 -m pip list |grep mtools
   then
     # Use the existing mtools-legacy
     :
   else
-    venvpath="$MONGO_ORCHESTRATION_HOME"/venv
-    python3 -m venv $venvpath
-    . $venvpath/bin/activate
+    # Spawn a virtual environment, but only if one is not already
+    # active...
+    if test -z "$VIRTUAL_ENV"; then
+      venvpath="$MONGO_ORCHESTRATION_HOME"/venv
+      python3 -m venv $venvpath
+      . $venvpath/bin/activate
+    fi
+
     # [mlaunch] does not work:
     # https://github.com/rueckstiess/mtools/issues/856
     # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
@@ -155,6 +166,19 @@ install_mlaunch_git() {
       git checkout origin/$branch &&
       python2 setup.py install
     )
+  fi
+}
+
+install_cmake() {
+  if ! command -v cmake &> /dev/null; then
+    if ! command -v apt-get &> /dev/null; then
+      # no apt-get; assume RHEL
+      sudo yum -y install cmake libarchive
+    else
+      sudo apt-get install --yes cmake
+    fi
+  else
+    echo 'cmake is present'
   fi
 }
 
