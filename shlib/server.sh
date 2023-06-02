@@ -197,7 +197,7 @@ calculate_server_args() {
   fi
 
   if test $mongo_version = latest; then
-    mongo_version=60
+    mongo_version=70
   fi
 
   local args="--setParameter enableTestCommands=1"
