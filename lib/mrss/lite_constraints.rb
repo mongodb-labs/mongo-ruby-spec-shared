@@ -98,8 +98,8 @@ module Mrss
     def min_libmongocrypt_version(version)
       require_libmongocrypt
       before(:all) do
-        actual_version = Gem::Version.new(Mongo::Crypt::Binding.mongocrypt_version(nil))
-        min_version = Gem::Version.new(version)
+        actual_version = Utils.parse_version(Mongo::Crypt::Binding.mongocrypt_version(nil))
+        min_version = Utils.parse_version(version)
         unless actual_version >= min_version
           skip "libmongocrypt version #{min_version} required, but version #{actual_version} is available"
         end
