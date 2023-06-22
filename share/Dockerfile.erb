@@ -97,6 +97,10 @@ ENV DOCKER=1
     <% packages << 'python-pip' %>
   <% end %>
 
+  <% if distro =~ /debian11/ %>
+    <% packages << 'python3-venv' %>
+  <% end %>
+
   <% if distro =~ /debian10|debian11/ %>
     <% packages << 'openjdk-11-jdk-headless' %>
   <% elsif distro =~ /ubuntu1404/ %>
