@@ -87,21 +87,21 @@ ENV DOCKER=1
 
   <% if distro =~ /ubuntu2004/ %>
     <% packages << 'libsnmp35' %>
-  <% elsif distro =~ /debian11/ %>
+  <% elsif distro =~ /ubuntu2204|debian11/ %>
     <% packages << 'libsnmp40' %>
   <% else %>
     <% packages << 'libsnmp30' %>
   <% end %>
 
-  <% if distro !~ /ubuntu2004|debian11/ %>
+  <% if distro !~ /ubuntu2004|ubuntu2204|debian11/ %>
     <% packages << 'python-pip' %>
   <% end %>
 
-  <% if distro =~ /debian11/ %>
+  <% if distro =~ /ubuntu2204|debian11/ %>
     <% packages << 'python3-venv' %>
   <% end %>
 
-  <% if distro =~ /debian10|debian11/ %>
+  <% if distro =~ /debian10|ubuntu2204|debian11/ %>
     <% packages << 'openjdk-11-jdk-headless' %>
   <% elsif distro =~ /ubuntu1404/ %>
     # Ubuntu 14.04 only has openjdk 7, this is too old to be useful
@@ -111,18 +111,18 @@ ENV DOCKER=1
 
   # ubuntu1404, ubuntu1604: libcurl3
   # ubuntu1804, ubuntu2004, debian10: libcurl4
-  <% if distro =~ /ubuntu1804|ubuntu2004|debian10|debian11/ %>
+  <% if distro =~ /ubuntu1804|ubuntu2004|ubuntu2204|debian10|debian11/ %>
     <% packages << 'libcurl4' %>
   <% else %>
     <% packages << 'libcurl3' %>
   <% end %>
 
-  <% if distro =~ /ubuntu1804|ubuntu2004/ %>
+  <% if distro =~ /ubuntu1804|ubuntu2004|ubuntu2204/ %>
     <% packages << 'nodejs' %>
   <% end %>
 
-  <% if distro =~ /ubuntu2004/ %>
-    <% packages += %w(ruby ruby2.7 bundler) %>
+  <% if distro =~ /ubuntu2004|ubuntu2204/ %>
+    <% packages += %w(ruby bundler) %>
   <% end %>
 
   RUN apt-get update && apt-get install -y <%= packages.join(' ') %>
@@ -174,22 +174,7 @@ CFG
 
   RUN yum install -y redhat-lsb-core which git gcc libyaml krb5-server \
     krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi java-1.8.0-openjdk \
-    net-snmp python3 cmake
-
-  <% if distro =~ /rhel6/ %>
-
-    # RHEL 6 ships with Python 2.6.
-
-    RUN yum install -y centos-release-scl && \
-      yum install -y python27-python python27-python-devel
-    ENV PATH=/opt/rh/python27/root/usr/bin:$PATH \
-      LD_LIBRARY_PATH=/opt/rh/python27/root/usr/lib64
-
-  <% else %>
-
-    RUN yum install -y python-devel
-
-  <% end %>
+    net-snmp python38 python38-devel cmake nodejs
 
 <% end %>
 
@@ -246,7 +231,7 @@ CFG
   <% if @env.fetch('MONGODB_VERSION') >= '4.4' %>
     # ubuntu1604 installs MarkupSafe 0.0.0 here instead of 2.0.0+
     # as specified by dependencies, causing OCSP mock to not work.
-    RUN python3 -mpip install asn1crypto oscrypto flask --upgrade
+    RUN python3 -mpip install asn1crypto oscrypto flask --upgrade --ignore-installed
   <% end %>
 
   # FLE is tested against 4.0+ servers.
