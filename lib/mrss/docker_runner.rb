@@ -200,8 +200,10 @@ module Mrss
       'ubuntu1604' => 'ubuntu:xenial',
       'ubuntu1804' => 'ubuntu:bionic',
       'ubuntu2004' => 'ubuntu:focal',
+      'ubuntu2204' => 'ubuntu:jammy',
       'rhel62' => 'centos:6',
       'rhel70' => 'centos:7',
+      'rhel80' => 'rockylinux:8',
     }.freeze
 
     def base_image
