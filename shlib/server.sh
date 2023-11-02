@@ -104,6 +104,7 @@ install_mlaunch_venv() {
     #pip install 'mtools==1.7' 'pymongo==4.1' python-dateutil psutil
 
     # dateutil dependency is missing in mtools: https://github.com/rueckstiess/mtools/issues/864
+    pip install --upgrade setuptools
     pip install 'mtools-legacy[mlaunch]' 'pymongo<4' python-dateutil
   fi
 }
