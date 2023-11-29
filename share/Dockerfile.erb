@@ -118,7 +118,7 @@ ENV DOCKER=1
   <% end %>
 
   <% if distro =~ /ubuntu1804|ubuntu2004|ubuntu2204/ %>
-    <% packages << 'nodejs' %>
+    <% packages << 'nodejs npm' %>
   <% end %>
 
   <% if distro =~ /ubuntu2004|ubuntu2204/ %>
@@ -289,6 +289,10 @@ WORKDIR /app
 
 <% if preload? %>
   ENV DOCKER_PRELOAD=1
+<% end %>
+
+<% if distro =~ /ubuntu1804|ubuntu2004|ubuntu2204/ %>
+  RUN npm install --global yarn
 <% end %>
 
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
