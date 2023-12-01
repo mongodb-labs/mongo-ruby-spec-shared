@@ -82,7 +82,7 @@ ENV DOCKER=1
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
     haproxy
     python3-pip
-    tzdata shared-mime-info software-properties-common xz-utils
+    tzdata shared-mime-info software-properties-common xz-utils nodejs npm
   ) %>
 
   <% if distro =~ /ubuntu2004/ %>
@@ -115,10 +115,6 @@ ENV DOCKER=1
     <% packages << 'libcurl4' %>
   <% else %>
     <% packages << 'libcurl3' %>
-  <% end %>
-
-  <% if distro =~ /ubuntu1804|ubuntu2004|ubuntu2204/ %>
-    <% packages << 'nodejs npm' %>
   <% end %>
 
   <% if distro =~ /ubuntu2004|ubuntu2204/ %>
@@ -174,7 +170,7 @@ CFG
 
   RUN yum install -y redhat-lsb-core which git gcc gcc-c++ libyaml krb5-server \
     krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi java-1.8.0-openjdk \
-    net-snmp python38 python38-devel cmake nodejs xz
+    net-snmp python38 python38-devel cmake nodejs npm xz
 
 <% end %>
 
