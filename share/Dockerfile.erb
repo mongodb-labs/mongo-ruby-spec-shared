@@ -78,7 +78,7 @@ ENV DOCKER=1
 
   <% packages = %w(
     procps lsb-release bzip2 curl wget gpg zsh
-    git make gcc libyaml-0-2 libgmp-dev zlib1g-dev libsnappy-dev
+    git make gcc g++ libyaml-0-2 libgmp-dev zlib1g-dev libsnappy-dev
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
     haproxy
     python3-pip
@@ -172,7 +172,7 @@ CFG
   # "SASL(-4): no mechanism available: No worthy mechs found"
   # https://github.com/farorm/python-ad/issues/10
 
-  RUN yum install -y redhat-lsb-core which git gcc libyaml krb5-server \
+  RUN yum install -y redhat-lsb-core which git gcc gcc-c++ libyaml krb5-server \
     krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi java-1.8.0-openjdk \
     net-snmp python38 python38-devel cmake nodejs xz
 
@@ -291,9 +291,7 @@ WORKDIR /app
   ENV DOCKER_PRELOAD=1
 <% end %>
 
-<% if distro =~ /ubuntu1804|ubuntu2004|ubuntu2204/ %>
-  RUN npm install --global yarn
-<% end %>
+RUN npm install --global yarn
 
 ENV MONGO_ORCHESTRATION_HOME=/tmpfs \
   PROJECT_DIRECTORY=/app \
