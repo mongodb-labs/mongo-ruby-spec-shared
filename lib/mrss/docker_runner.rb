@@ -196,13 +196,9 @@ module Mrss
       'debian92' => 'debian:stretch',
       'debian10' => 'debian:buster',
       'debian11' => 'debian:bullseye',
-      'ubuntu1404' => 'ubuntu:trusty',
-      'ubuntu1604' => 'ubuntu:xenial',
       'ubuntu1804' => 'ubuntu:bionic',
       'ubuntu2004' => 'ubuntu:focal',
       'ubuntu2204' => 'ubuntu:jammy',
-      'rhel62' => 'centos:6',
-      'rhel70' => 'centos:7',
       'rhel80' => 'rockylinux:8',
     }.freeze
 
@@ -264,14 +260,12 @@ module Mrss
 
     def libmongocrypt_path
       case distro
-      when /ubuntu1604/
-        "./ubuntu1604/nocrypto/lib64/libmongocrypt.so"
       when /ubuntu1804/
         "./ubuntu1804-64/nocrypto/lib64/libmongocrypt.so"
       when /debian92/
         "./debian92/nocrypto/lib64/libmongocrypt.so"
       else
-        raise "This script does not support running FLE tests on #{distro}. Use ubuntu1604, ubuntu1804 or debian92 instead"
+        raise "This script does not support running FLE tests on #{distro}. Use ubuntu1804 or debian92 instead"
       end
     end
 
