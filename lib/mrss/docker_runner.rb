@@ -210,6 +210,14 @@ module Mrss
       BASE_IMAGES[distro] or raise "Unknown distro: #{distro}"
     end
 
+    def platform
+      if RUBY_PLATFORM =~ /arm64/
+        '--platform=linux/amd64'
+      else
+        nil
+      end
+    end
+
     def ruby
       @env['RVM_RUBY']
     end

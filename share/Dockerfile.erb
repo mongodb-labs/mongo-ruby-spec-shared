@@ -23,7 +23,7 @@ end
 
 %>
 
-FROM <%= base_image %>
+FROM <%= platform %> <%= base_image %>
 
 ENV DOCKER=1
 
