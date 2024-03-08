@@ -56,7 +56,7 @@ ENV DOCKER=1
   # Ruby runtime dependencies: libyaml-0-2
   # Compiling ruby libraries: gcc make
   # Compiling python packages: python3-dev
-  # JRuby: openjdk-8-jdk-headless
+  # JRuby: openjdk-17-jdk-headless
   # Server dependencies: libsnmp30 libcurl3/libcurl4
   # Determining OS we are running on: lsb-release
   # Load balancer testing: haproxy
@@ -80,9 +80,10 @@ ENV DOCKER=1
     procps lsb-release bzip2 curl wget gpg zsh
     git make gcc g++ libyaml-dev libgmp-dev zlib1g-dev libsnappy-dev
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
-    haproxy
+    haproxy libcurl4
     python3-pip
     tzdata shared-mime-info software-properties-common xz-utils nodejs npm
+    openjdk-17-jdk-headless
   ) %>
 
   <% if distro =~ /ubuntu2004/ %>
@@ -101,22 +102,6 @@ ENV DOCKER=1
     <% packages << 'python3-venv' %>
   <% end %>
 
-  <% if distro =~ /debian10|ubuntu2204|debian11/ %>
-    <% packages << 'openjdk-11-jdk-headless' %>
-  <% elsif distro =~ /ubuntu1404/ %>
-    # Ubuntu 14.04 only has openjdk 7, this is too old to be useful
-  <% else %>
-    <% packages << 'openjdk-8-jdk-headless' %>
-  <% end %>
-
-  # ubuntu1404, ubuntu1604: libcurl3
-  # ubuntu1804, ubuntu2004, debian10: libcurl4
-  <% if distro =~ /ubuntu1804|ubuntu2004|ubuntu2204|debian10|debian11/ %>
-    <% packages << 'libcurl4' %>
-  <% else %>
-    <% packages << 'libcurl3' %>
-  <% end %>
-
   <% if distro =~ /ubuntu2004|ubuntu2204/ %>
     <% packages += %w(ruby bundler) %>
   <% end %>
@@ -131,29 +116,6 @@ ENV DOCKER=1
 
 <% else %>
 
-  <% if distro =~ /rhel6/ %>
-
-    # CentOS 6 is dead - to use it retrieve the packages from vault:
-    # https://stackoverflow.com/questions/53562691/error-cannot-retrieve-repository-metadata-repomd-xml-for-repository-base-pl
-
-    <%
-
-      cfg = <<-CFG
-[base]
-name=CentOS-$releasever - Base
-#mirrorlist=http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=os
-#baseurl=http://mirror.centos.org/centos/$releasever/os/$basearch/
-baseurl=http://vault.centos.org/6.10/os/x86_64/
-gpgcheck=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
-CFG
-
-    %>
-
-    RUN printf "<%= cfg.gsub("\n", "\\n") %>" >/etc/yum.repos.d/CentOS-Base.repo
-
-  <% end %>
-
   # Enterprise server: net-snmp
   # lsb_release: redhat-lsb-core
   # our runner scripts: which
@@ -162,14 +124,14 @@ CFG
   # Kerberos tests: krb5-workstation + cyrus-sasl-devel to build the
   # mongo_kerberos gem + cyrus-sasl-gssapi for authentication to work
   # Local Kerberos server: krb5-server
-  # JRuby: java-1.8.0-openjdk
+  # JRuby: java-17-openjdk
   #
   # Note: lacking cyrus-sasl-gssapi produces a cryptic message
   # "SASL(-4): no mechanism available: No worthy mechs found"
   # https://github.com/farorm/python-ad/issues/10
 
   RUN yum --enablerepo=powertools install -y redhat-lsb-core which git gcc gcc-c++ libyaml-devel krb5-server \
-    krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi java-1.8.0-openjdk \
+    krb5-workstation cyrus-sasl-devel cyrus-sasl-gssapi java-17-openjdk \
     net-snmp python38 python38-devel cmake nodejs npm xz
 
 <% end %>
