@@ -44,9 +44,6 @@ prepare_server() {
   fi
 
   if test "$MONGODB_VERSION" = latest; then
-    # Test on the most recent published 4.3 release.
-    # https://jira.mongodb.org/browse/RUBY-1724
-
     . $PROJECT_DIRECTORY/.mod/drivers-evergreen-tools/.evergreen/download-mongodb.sh
 
     get_distro
@@ -209,17 +206,14 @@ calculate_server_args() {
     args="$args --setParameter acceptAPIVersion2=1"
   fi
 
-  # diagnosticDataCollectionEnabled is a mongod-only parameter on server 3.2,
-  # and mlaunch does not support specifying mongod-only parameters:
-  # https://github.com/rueckstiess/mtools/issues/696
-  # Pass it to 3.4 and newer servers where it is accepted by all daemons.
-  if test $mongo_version -ge 34; then
-    args="$args --setParameter diagnosticDataCollectionEnabled=false"
-  fi
+  args="$args --setParameter diagnosticDataCollectionEnabled=false"
+
   local uri_options=
   if test "$TOPOLOGY" = replica-set; then
     args="$args --replicaset --name test-rs --nodes 2 --arbiter"
     export HAVE_ARBITER=1
+  elif test "$TOPOLOGY" = replica-set-single-node; then
+    args="$args --replicaset --name test-rs --nodes 1"
   elif test "$TOPOLOGY" = sharded-cluster; then
     args="$args --replicaset --nodes 2 --sharded 1 --name test-rs"
     if test -z "$SINGLE_MONGOS"; then

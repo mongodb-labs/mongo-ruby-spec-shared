@@ -282,7 +282,7 @@ module Mrss
 
     def num_exposed_ports
       case @env['TOPOLOGY'] || 'standalone'
-      when 'standalone'
+      when 'standalone', 'replica-set-single-node'
         1
       when 'replica-set'
         3
