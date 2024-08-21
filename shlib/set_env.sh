@@ -1,5 +1,5 @@
 # When changing, also update the hash in share/Dockerfile.
-TOOLCHAIN_VERSION=c950fe1e85fd7d5e4ea69cc2afff456825583716
+TOOLCHAIN_VERSION=4d3d4dcd1eeff93bb4d2c5e46bebb55b757e89fe
 JDK_VERSION=jdk17
 
 set_env_java() {
