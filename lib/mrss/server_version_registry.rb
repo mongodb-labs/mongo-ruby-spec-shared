@@ -19,7 +19,7 @@ module Mrss
     end
 
     def initialize(desired_version, arch)
-      @desired_version, @arch = desired_version, arch
+      @desired_version, @arch = desired_version, arch.sub(/-arm$/, '')
     end
 
     attr_reader :desired_version, :arch

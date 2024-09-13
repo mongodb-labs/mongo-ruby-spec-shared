@@ -167,6 +167,19 @@ install_mlaunch_git() {
   fi
 }
 
+install_haproxy() {
+  if ! command -v haproxy &> /dev/null; then
+    if ! command -v apt-get &> /dev/null; then
+      # no apt-get; assume RHEL
+      sudo yum -y install haproxy
+    else
+      sudo apt-get install --yes haproxy
+    fi
+  else
+    echo 'haproxy is present'
+  fi
+}
+
 install_cmake() {
   if ! command -v cmake &> /dev/null; then
     if ! command -v apt-get &> /dev/null; then

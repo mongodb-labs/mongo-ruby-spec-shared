@@ -13,7 +13,7 @@ server_archive_basename = File.basename(server_url)
 server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
 
 # When changing, also update the hash in shlib/set_env.sh.
-TOOLCHAIN_VERSION='c950fe1e85fd7d5e4ea69cc2afff456825583716'
+TOOLCHAIN_VERSION='deefab59d8f539bdd4a0154505f1e7d39a0857d0'
 
 def ruby_toolchain_url(ruby)
   "http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/#{TOOLCHAIN_VERSION}/#{distro}/#{ruby}.tar.xz"
