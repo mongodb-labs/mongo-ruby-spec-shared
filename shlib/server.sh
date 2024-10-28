@@ -35,26 +35,19 @@ add_uri_option() {
 }
 
 prepare_server() {
-  arch=$1
-
   if test -n "$USE_OPT_MONGODB"; then
     export BINDIR=/opt/mongodb/bin
     export PATH=$BINDIR:$PATH
     return
   fi
 
-  if test "$MONGODB_VERSION" = latest; then
-    . $PROJECT_DIRECTORY/.mod/drivers-evergreen-tools/.evergreen/download-mongodb.sh
+  . $PROJECT_DIRECTORY/.mod/drivers-evergreen-tools/.evergreen/download-mongodb.sh
 
-    get_distro
-    get_mongodb_download_url_for "$DISTRO" "latest"
-    prepare_server_from_url $MONGODB_DOWNLOAD_URL $MONGOSH
-  else
-    download_version="$MONGODB_VERSION"
-    url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`
-    prepare_server_from_url $url $MONGOSH
-  fi
+  get_distro
+  arch="${1:-$DISTRO}"
 
+  get_mongodb_download_url_for "$arch" "$MONGODB_VERSION"
+  prepare_server_from_url "$MONGODB_DOWNLOAD_URL" "$MONGOSH"
 }
 
 prepare_server_from_url() {
