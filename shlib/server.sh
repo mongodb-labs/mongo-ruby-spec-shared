@@ -48,22 +48,28 @@ prepare_server() {
 
     get_distro
     get_mongodb_download_url_for "$DISTRO" "latest"
-    prepare_server_from_url $MONGODB_DOWNLOAD_URL
+    prepare_server_from_url $MONGODB_DOWNLOAD_URL $MONGOSH
   else
     download_version="$MONGODB_VERSION"
     url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`
-    prepare_server_from_url $url
+    prepare_server_from_url $url $MONGOSH
   fi
 
 }
 
 prepare_server_from_url() {
-  url=$1
+  server_url=$1
+  mongosh_url=$2
 
-  dirname=`basename $url |sed -e s/.tgz//`
+  dirname=`basename $server_url |sed -e s/.tgz//`
   mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb/"$dirname"
   mkdir -p "$mongodb_dir"
-  curl --retry 3 $url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
+  curl --retry 3 $server_url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
+
+  if test -n "$mongosh"; then
+    curl --retry 3 $mongosh_url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
+  fi
+
   BINDIR="$mongodb_dir"/bin
   export PATH="$BINDIR":$PATH
 }
