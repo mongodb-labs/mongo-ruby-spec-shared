@@ -47,7 +47,7 @@ prepare_server() {
   arch="${1:-$DISTRO}"
 
   get_mongodb_download_url_for "$arch" "$MONGODB_VERSION"
-  prepare_server_from_url "$MONGODB_DOWNLOAD_URL" "$MONGOSH"
+  prepare_server_from_url "$MONGODB_DOWNLOAD_URL" "$MONGOSH_DOWNLOAD_URL"
 }
 
 prepare_server_from_url() {
@@ -59,7 +59,7 @@ prepare_server_from_url() {
   mkdir -p "$mongodb_dir"
   curl --retry 3 $server_url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
 
-  if test -n "$mongosh"; then
+  if test -n "$mongosh_url"; then
     curl --retry 3 $mongosh_url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
   fi
 
