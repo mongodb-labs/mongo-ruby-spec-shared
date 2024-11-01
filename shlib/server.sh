@@ -35,35 +35,34 @@ add_uri_option() {
 }
 
 prepare_server() {
-  arch=$1
-
   if test -n "$USE_OPT_MONGODB"; then
     export BINDIR=/opt/mongodb/bin
     export PATH=$BINDIR:$PATH
     return
   fi
 
-  if test "$MONGODB_VERSION" = latest; then
-    . $PROJECT_DIRECTORY/.mod/drivers-evergreen-tools/.evergreen/download-mongodb.sh
+  . $PROJECT_DIRECTORY/.mod/drivers-evergreen-tools/.evergreen/download-mongodb.sh
 
-    get_distro
-    get_mongodb_download_url_for "$DISTRO" "latest"
-    prepare_server_from_url $MONGODB_DOWNLOAD_URL
-  else
-    download_version="$MONGODB_VERSION"
-    url=`$(dirname $0)/get-mongodb-download-url $download_version $arch`
-    prepare_server_from_url $url
-  fi
+  get_distro
+  arch="${1:-$DISTRO}"
 
+  get_mongodb_download_url_for "$arch" "$MONGODB_VERSION"
+  prepare_server_from_url "$MONGODB_DOWNLOAD_URL" "$MONGOSH_DOWNLOAD_URL"
 }
 
 prepare_server_from_url() {
-  url=$1
+  server_url=$1
+  mongosh_url=$2
 
-  dirname=`basename $url |sed -e s/.tgz//`
+  dirname=`basename $server_url |sed -e s/.tgz//`
   mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb/"$dirname"
   mkdir -p "$mongodb_dir"
-  curl --retry 3 $url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
+  curl --retry 3 $server_url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
+
+  if test -n "$mongosh_url"; then
+    curl --retry 3 $mongosh_url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
+  fi
+
   BINDIR="$mongodb_dir"/bin
   export PATH="$BINDIR":$PATH
 }
