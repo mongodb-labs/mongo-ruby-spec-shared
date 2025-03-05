@@ -64,6 +64,16 @@ _detect_distro() {
       release=`echo $release |sed -e s/7/70/ -e s/6/62/ -e s/8/80/`
       distro=rhel$release
     fi
+  elif test -f /etc/os-release; then
+    name=`grep -o '^NAME=.*' /etc/os-release | awk -F '"' '{ print $2 }'`
+    version=`grep -o '^VERSION=.*' /etc/os-release | awk -F '"' '{ print $2 }'`
+    if test "$name" = "Amazon Linux"; then
+      distro=amazon$version
+    else
+      cat /etc/os-release
+      echo 'Unknown distro' 1>&2
+      exit 1
+    fi
   else
     lsb_release -a
     echo 'Unknown distro' 1>&2
