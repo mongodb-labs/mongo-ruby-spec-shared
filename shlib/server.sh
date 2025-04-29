@@ -172,7 +172,7 @@ install_haproxy() {
       # no apt-get; assume RHEL
       sudo yum -y install haproxy
     else
-      sudo apt-get install --yes haproxy
+      sudo apt-get update && sudo apt-get install --yes haproxy
     fi
   else
     echo 'haproxy is present'
@@ -185,7 +185,7 @@ install_cmake() {
       # no apt-get; assume RHEL
       sudo yum -y install cmake libarchive
     else
-      sudo apt-get install --yes cmake
+      sudo apt-get update && sudo apt-get install --yes cmake
     fi
   else
     echo 'cmake is present'
