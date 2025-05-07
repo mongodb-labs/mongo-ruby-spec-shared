@@ -93,7 +93,7 @@ set_env_ruby() {
       # For testing unpublished builds:
       #build_url=https://s3.amazonaws.com/mciuploads/mongo-ruby-toolchain/library/`host_distro`/$RVM_RUBY.tar.xz
 
-      build_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/library/`host_distro`/$RVM_RUBY.tar.xz
+      build_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-toolchain/library/`host_distro`/$RVM_RUBY.tar.xz
       curl --retry 3 -fL $build_url |tar Jxf -
       export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
     fi
