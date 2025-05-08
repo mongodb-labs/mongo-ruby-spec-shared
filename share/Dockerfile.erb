@@ -1,25 +1,8 @@
-# Python toolchain as of this writing is available on rhel62, debian92 and
-# ubuntu1604.
-#
-# To run rhel62 in docker, host system must be configured to emulate syscalls:
-# https://github.com/CentOS/sig-cloud-instance-images/issues/103
-
 <%
 
-python_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-python-driver-toolchain/#{distro}/ba92de2700c04ee2d4f82c3ffdfc33105140cb04/mongo_python_driver_toolchain_#{distro.gsub('-', '_')}_ba92de2700c04ee2d4f82c3ffdfc33105140cb04_19_11_14_15_33_33.tar.gz"
-# server_version = '4.3.3'
-server_url = "http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-#{distro}-#{server_version}.tgz"
-server_archive_basename = File.basename(server_url)
-server_extracted_dir = server_archive_basename.sub(/\.(tar\.gz|tgz)$/, '')
-
-# When changing, also update the hash in shlib/set_env.sh.
-TOOLCHAIN_VERSION='deefab59d8f539bdd4a0154505f1e7d39a0857d0'
-
 def ruby_toolchain_url(ruby)
-  "http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/#{TOOLCHAIN_VERSION}/#{distro}/#{ruby}.tar.xz"
+  "http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-toolchain/library/#{distro}/#{ruby}.tar.xz"
 end
-
-#ruby_toolchain_url = "https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/#{distro}/#{TOOLCHAIN_VERSION}/mongo_ruby_driver_toolchain_#{distro.gsub('-', '_')}_patch_#{TOOLCHAIN_VERSION}_#{toolchain_lower}.tar.gz"
 
 %>
 
@@ -34,18 +17,6 @@ ENV DOCKER=1
 <% else %>
 
   RUN echo assumeyes=1 |tee -a /etc/yum.conf
-
-<% end %>
-
-<% if ruby_head? %>
-
-  # To use current versions of mlaunch, Python 3.7+ is required.
-  # Many distros ship with older Pythons, therefore we need to install
-  # a newer Python from somewhere. This section installs the Python
-  # toolchain which comes with recent Pythons.
-
-  #RUN curl --retry 3 -fL <%= python_toolchain_url %> -o python-toolchain.tar.gz
-  #RUN tar -xC /opt -zf python-toolchain.tar.gz
 
 <% end %>
 
@@ -206,7 +177,6 @@ ENV DOCKER=1
     RUN curl --retry 3 -fL <%= ruby_toolchain_url(ruby) %> |tar -xC /opt -Jf -
     ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH \
       USE_OPT_TOOLCHAIN=1
-    #ENV PATH=/opt/rubies/python/3/bin:$PATH
 
   <% end %>
 

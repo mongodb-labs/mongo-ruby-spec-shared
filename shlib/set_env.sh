@@ -1,5 +1,4 @@
 # When changing, also update the hash in share/Dockerfile.
-TOOLCHAIN_VERSION=deefab59d8f539bdd4a0154505f1e7d39a0857d0
 JDK_VERSION=jdk17
 
 set_env_java() {
@@ -90,34 +89,13 @@ set_env_ruby() {
     if test "$USE_OPT_TOOLCHAIN" = 1; then
       # Nothing, also PATH is already set
       :
-    elif true; then
-
-    # For testing toolchains:
-    #toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_distro`/f11598d091441ffc8d746aacfdc6c26741a3e629/mongo_ruby_driver_toolchain_`host_distro |tr - _`_patch_f11598d091441ffc8d746aacfdc6c26741a3e629_5e46f2793e8e866f36eda2c5_20_02_14_19_18_18.tar.gz
-    toolchain_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-driver/$TOOLCHAIN_VERSION/`host_distro`/$RVM_RUBY.tar.xz
-    curl --retry 3 -fL $toolchain_url |tar Jxf -
-    export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
-    #export PATH=`pwd`/rubies/python/3/bin:$PATH
-
-    # Attempt to get bundler to report all errors - so far unsuccessful
-    #curl --retry 3 -o bundler-openssl.diff https://github.com/bundler/bundler/compare/v2.0.1...p-mongo:report-errors.diff
-    #find . -path \*/lib/bundler/fetcher.rb -exec patch {} bundler-openssl.diff \;
-
     else
+      # For testing unpublished builds:
+      #build_url=https://s3.amazonaws.com/mciuploads/mongo-ruby-toolchain/library/`host_distro`/$RVM_RUBY.tar.xz
 
-    # Normal operation
-    if ! test -d $HOME/.rubies/$RVM_RUBY/bin; then
-      echo "Ruby directory does not exist: $HOME/.rubies/$RVM_RUBY/bin" 1>&2
-      echo "Contents of /opt:" 1>&2
-      ls -l /opt 1>&2 || true
-      echo ".rubies symlink:" 1>&2
-      ls -ld $HOME/.rubies 1>&2 || true
-      echo "Our rubies:" 1>&2
-      ls -l $HOME/.rubies 1>&2 || true
-      exit 2
-    fi
-    export PATH=$HOME/.rubies/$RVM_RUBY/bin:$PATH
-
+      build_url=http://boxes.10gen.com/build/toolchain-drivers/mongo-ruby-toolchain/library/`host_distro`/$RVM_RUBY.tar.xz
+      curl --retry 3 -fL $build_url |tar Jxf -
+      export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
     fi
 
     ruby --version
@@ -128,19 +106,5 @@ set_env_ruby() {
 
     ruby -v |fgrep $ruby_name
     ruby -v |fgrep $ruby_version
-
-    # We shouldn't need to update rubygems, and there is value in
-    # testing on whatever rubygems came with each supported ruby version
-    #echo 'updating rubygems'
-    #gem update --system
-
-    # Only install bundler when not using ruby-head.
-    # ruby-head comes with bundler and gem complains
-    # because installing bundler would overwrite the bundler binary.
-    # We now install bundler in the toolchain, hence nothing needs to be done
-    # in the tests.
-    if false && echo "$RVM_RUBY" |grep -q jruby; then
-      gem install bundler -v '<2'
-    fi
   fi
 }
