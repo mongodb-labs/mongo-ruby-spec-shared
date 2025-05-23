@@ -52,7 +52,6 @@ ENV DOCKER=1
     git make gcc g++ libyaml-dev libgmp-dev zlib1g-dev libsnappy-dev
     krb5-user krb5-kdc krb5-admin-server libsasl2-dev libsasl2-modules-gssapi-mit
     haproxy libcurl4
-    python3-pip
     tzdata shared-mime-info software-properties-common xz-utils nodejs npm
     openjdk-17-jdk-headless
   ) %>
@@ -83,8 +82,9 @@ ENV DOCKER=1
     RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
     RUN echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/kitware.list >/dev/null
   <% end %>
-  RUN apt-get update && apt-get install -y cmake
-
+  RUN apt-add-repository ppa:deadsnakes/ppa -y
+  RUN apt-get update && apt-get install -y cmake python3.10 python3.10-dev python3.10-venv
+  RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 <% else %>
 
   # Enterprise server: net-snmp
