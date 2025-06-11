@@ -1,5 +1,5 @@
 # When changing, also update the hash in share/Dockerfile.
-JDK_VERSION=jdk17
+JDK_VERSION=jdk21
 
 set_env_java() {
   ls -l /opt || true
