@@ -14,7 +14,9 @@ module Mrss
 
         initial_data = {
           'name' => 'Product Name',
+          'description' => 'a very short description of the product',
           'package' => 'product_package',
+          'jira' => 'https://url.to.jira/project',
           'version' => { 'number' => '1.0.0',
                          'file' => 'path/to/version.rb' }
         }
@@ -33,12 +35,20 @@ module Mrss
       def rewrite_version_file!
         version_module = File.read(version_file)
         new_module = version_module.
-          sub(/^(\s*)(VERSION\s*=\s*).*$/) { "#{$1}#{$2}#{version.inspect}" }
+          sub(/^(\s*)(VERSION\s*=\s*).*$/) { "#{$1}#{$2}#{quoted_version}" }
         File.write(version_file, new_module)
       end
 
       def version
         @hash['version']['number']
+      end
+
+      def quoted_version
+        if version.include?("'")
+          version.inspect
+        else
+          "'#{version}'"
+        end
       end
 
       def version=(number)
@@ -92,8 +102,22 @@ module Mrss
         @hash['name']
       end
 
+      # The description is intended to be used in places where it can be
+      # appended to the end of a sentence, e.g.
+      #
+      #   "We just released #{product.name} - #{product.description}!"
+      #
+      # Markdown formatting is allowed (even expected).
+      def description
+        @hash['description']
+      end
+
       def package
         @hash['package']
+      end
+
+      def jira_project_url
+        @hash['jira']
       end
 
       def tag_name

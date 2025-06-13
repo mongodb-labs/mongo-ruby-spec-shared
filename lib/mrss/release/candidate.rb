@@ -237,25 +237,45 @@ module Mrss
         end
       end
 
+      def series
+        major, minor, = product.version_parts
+
+        case release_type
+        when 'minor' then 
+          "#{major}.x"
+        when 'patch' then
+          "#{major}.#{minor}.x"
+        end
+      end
+
       # Return a string containing the markdown-formatted intro block for
       # the release notes of this candidate.
       def release_notes_intro
-        <<~INTRO
-          #{product.name} #{product.version} is a new #{release_type} release.
+        release_description = case release_type
+                              when 'major' then 'major release'
+                              when 'minor' then "minor release in the #{series} series"
+                              when 'patch' then "patch release in the #{series} series"
+                              end
 
-          Install it via RubyGems at a command-line:
+        <<~INTRO
+          The MongoDB Ruby team is pleased to announce version #{product.version}
+          of the `#{product.package}` gem - #{product.description}.
+          This is a new #{release_description} of #{product.name}.
+
+          Install this release using [RubyGems](https://rubygems.org/) via the command line as follows: 
 
           ~~~
           gem install -v #{product.version} #{product.package}
           ~~~
 
-          Or by adding it to your Gemfile:
+          Or simply add it to your `Gemfile`:
 
           ~~~
           gem '#{product.package}', '#{product.version}'
           ~~~
 
-          Notable changes in this release are:
+          Have any feedback? Click on through to MongoDB's JIRA and
+          [open a new ticket](#{product.jira_project_url}) to let us know what's on your mind 🧠.
 
         INTRO
       end
