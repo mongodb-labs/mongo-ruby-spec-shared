@@ -258,9 +258,7 @@ module Mrss
                               end
 
         <<~INTRO
-          The MongoDB Ruby team is pleased to announce version #{product.version}
-          of the `#{product.package}` gem - #{product.description}.
-          This is a new #{release_description} of #{product.name}.
+          The MongoDB Ruby team is pleased to announce version #{product.version} of the `#{product.package}` gem - #{product.description}. This is a new #{release_description} of #{product.name}.
 
           Install this release using [RubyGems](https://rubygems.org/) via the command line as follows: 
 
@@ -274,8 +272,7 @@ module Mrss
           gem '#{product.package}', '#{product.version}'
           ~~~
 
-          Have any feedback? Click on through to MongoDB's JIRA and
-          [open a new ticket](#{product.jira_project_url}) to let us know what's on your mind 🧠.
+          Have any feedback? Click on through to MongoDB's JIRA and [open a new ticket](#{product.jira_project_url}) to let us know what's on your mind 🧠.
 
         INTRO
       end
