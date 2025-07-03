@@ -78,7 +78,7 @@ install_mlaunch_venv() {
     # Debian11/Ubuntu2204 have venv installed, but it is nonfunctional unless
     # the python3-venv package is also installed (it lacks the ensurepip
     # module).
-    sudo apt-get install --yes python3-venv
+    sudo apt-get update && sudo apt-get install --yes python3-venv
   fi
   if test "$USE_SYSTEM_PYTHON_PACKAGES" = 1 &&
     python3 -m pip list |grep mtools
