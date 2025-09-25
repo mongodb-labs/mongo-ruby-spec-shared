@@ -25,19 +25,19 @@ module Mrss
     end
 
     def initialize(root: nil, classifiers:, priority_order:,
-      spec_root: nil, rspec_json_path: nil, rspec_all_json_path: nil,
-      randomize: false
+      spec_root: nil, rspec_json_path: nil, rspec_all_json_path: nil, rspec_xml_path: nil, randomize: false
     )
       @spec_root = spec_root || File.join(root, 'spec')
       @classifiers = classifiers
       @priority_order = priority_order
       @rspec_json_path = rspec_json_path || File.join(root, 'tmp/rspec.json')
       @rspec_all_json_path = rspec_all_json_path || File.join(root, 'tmp/rspec-all.json')
+      @rspec_xml_path = rspec_xml_path || File.join(root, 'tmp/rspec.xml')
       @randomize = !!randomize
     end
 
     attr_reader :spec_root, :classifiers, :priority_order
-    attr_reader :rspec_json_path, :rspec_all_json_path
+    attr_reader :rspec_json_path, :rspec_all_json_path, :rspec_xml_path
 
     def randomize?
       @randomize
@@ -45,6 +45,25 @@ module Mrss
 
     def seed
       @seed ||= (rand * 100_000).to_i
+    end
+
+    # Remove all XML files from tmp directory before running tests
+    def cleanup_xml_files
+      xml_pattern = File.join(File.dirname(rspec_xml_path), '*.xml')
+      Dir.glob(xml_pattern).each do |xml_file|
+        FileUtils.rm_f(xml_file)
+      end
+    end
+
+    # Move the XML file to a timestamped version for evergreen upload
+    def archive_xml_file(category)
+      return unless File.exist?(rspec_xml_path)
+
+      timestamp = Time.now.strftime('%Y%m%d_%H%M%S_%3N')
+      archived_path = rspec_xml_path.sub(/\.xml$/, "-#{category}-#{timestamp}.xml")
+
+      FileUtils.mv(rspec_xml_path, archived_path)
+      puts "Archived XML results to #{archived_path}"
     end
 
     def buckets
@@ -96,6 +115,8 @@ module Mrss
 
     def run_buckets(*buckets)
       FileUtils.rm_f(rspec_all_json_path)
+      # Clean up all XML files before starting test runs
+      cleanup_xml_files
 
       buckets.each do |bucket|
         if bucket && !self.buckets[bucket]
@@ -131,7 +152,12 @@ module Mrss
     def run_files(category, paths)
       puts "Running #{category.to_s.gsub('_', ' ')} tests"
       FileUtils.rm_f(rspec_json_path)
+      FileUtils.rm_f(rspec_xml_path)  # Clean up XML file before running this bucket
+
       cmd = %w(rspec) + paths
+      # Add junit formatter for XML output
+      cmd += ['--format', 'Rfc::Riff', '--format', 'RspecJunitFormatter', '--out', rspec_xml_path]
+
       if randomize?
         cmd += %W(--order rand:#{seed})
       end
@@ -147,6 +173,9 @@ module Mrss
             FileUtils.cp(rspec_json_path, rspec_all_json_path)
           end
         end
+
+        # Archive XML file after running this bucket
+        archive_xml_file(category)
       end
 
       true
