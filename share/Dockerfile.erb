@@ -64,18 +64,6 @@ ENV DOCKER=1
     <% packages << 'libsnmp30' %>
   <% end %>
 
-  <% if distro !~ /ubuntu2004|ubuntu2204|debian11/ %>
-    <% packages << 'python-pip' %>
-  <% end %>
-
-  <% if distro =~ /ubuntu2204|debian11/ %>
-    <% packages << 'python3-venv' %>
-  <% end %>
-
-  <% if distro =~ /ubuntu2004|ubuntu2204/ %>
-    <% packages += %w(ruby bundler) %>
-  <% end %>
-
   RUN apt-get update && apt-get install -y <%= packages.join(' ') %>
 
   <% if ubuntu? %>
@@ -83,7 +71,7 @@ ENV DOCKER=1
     RUN echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/kitware.list >/dev/null
   <% end %>
   RUN apt-add-repository ppa:deadsnakes/ppa -y
-  RUN apt-get update && apt-get install -y cmake python3.10 python3.10-dev python3.10-venv
+  RUN apt-get update && apt-get install -y cmake python3.10 python3.10-dev python3.10-venv python3-pip
   RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 <% else %>
 
@@ -108,33 +96,6 @@ ENV DOCKER=1
 <% end %>
 
 <% if preload? %>
-
-  <% if distro =~ /debian9|ubuntu1604|ubuntu1804/ %>
-    # Install python 3.7 for mlaunch.
-    RUN curl -fL --retry 3 https://github.com/p-mongodb/deps/raw/main/<%= distro %>-python37.tar.xz | \
-      tar xfJ - -C /opt
-    ENV PATH=/opt/python37/bin:$PATH
-    RUN python3 -V
-  <% end %>
-
-  <% if true || distro =~ /rhel|ubuntu1604/ %>
-
-    # Ubuntu 12.04 ships pip 1.0 which is ancient and does not work.
-    #
-    # Ubuntu 16.04 apparently also ships a pip that does not work:
-    # https://stackoverflow.com/questions/37495375/python-pip-install-throws-typeerror-unsupported-operand-types-for-retry
-    # Potentially this only affects environments with less than ideal
-    # connectivity (or, perhaps, when python package registry is experiencing
-    # availability issues) when pip must retry to install packages.
-    #
-    # rhel apparently does not package pip at all in core repoitories,
-    # therefore install it the manual way.
-    #
-    # https://pip.pypa.io/en/stable/installing/
-    RUN curl --retry 3 -fL https://bootstrap.pypa.io/pip/get-pip.py | python3
-    RUN python3 -m pip install --upgrade pip setuptools wheel
-
-  <% end %>
 
   # Current virtualenv fails with
   # https://github.com/pypa/virtualenv/issues/1630
@@ -174,10 +135,15 @@ ENV DOCKER=1
 
   <% unless ruby_head? || system_ruby? %>
 
+    RUN echo "Installing Ruby <%= ruby %> toolchain from <%= ruby_toolchain_url(ruby) %>"
     RUN curl --retry 3 -fL <%= ruby_toolchain_url(ruby) %> |tar -xC /opt -Jf -
     ENV PATH=/opt/rubies/<%= ruby %>/bin:$PATH \
       USE_OPT_TOOLCHAIN=1
 
+    RUN ls /opt/rubies
+    RUN which ruby
+    RUN ruby -v
+    RUN bundle -v
   <% end %>
 
 <% end %>
