@@ -69,24 +69,12 @@ module Mrss
       before(:all) do
         case ClusterConfig.instance.topology
         when :single
-          skip 'Transactions tests require a replica set (4.0+) or a sharded cluster (4.2+)'
-        when :replica_set
-          unless ClusterConfig.instance.server_version >= '4.0'
-            skip 'Transactions tests in a replica set topology require server 4.0+'
-          end
-        when :sharded, :load_balanced
-          unless ClusterConfig.instance.server_version >= '4.2'
-            skip 'Transactions tests in a sharded cluster topology require server 4.2+'
-          end
+          skip 'Transactions tests require a replica set or a sharded cluster'
+        when :replica_set, :sharded, :load_balanced
         else
-          raise NotImplementedError
+          raise NotImplementedError, "Unknown topology #{ClusterConfig.instance.topology}"
         end
       end
-    end
-
-    # Fail command fail point was added to mongod in 4.0 and to mongos in 4.2.
-    def require_fail_command
-      require_transaction_support
     end
 
     def require_tls
@@ -239,13 +227,11 @@ module Mrss
     end
 
     # Can the driver specify a write concern that won't be overridden?
-    # (mongos 4.0+ overrides the write concern)
+    # (mongos overrides the write concern)
     def require_set_write_concern
       before(:all) do
-        if %i(sharded load_balanced).include?(ClusterConfig.instance.topology) &&
-          ClusterConfig.instance.short_server_version >= '4.0'
-        then
-          skip "mongos 4.0+ overrides write concern"
+        if %i(sharded load_balanced).include?(ClusterConfig.instance.topology)
+          skip "mongos overrides write concern"
         end
       end
     end
@@ -282,36 +268,6 @@ module Mrss
     end
 
     alias :require_no_multi_shard :require_no_multi_mongos
-
-    def require_wired_tiger
-      before(:all) do
-        # Storage detection fails for serverless instances. However, it is safe to
-        # assume that a serverless instance uses WiredTiger Storage Engine.
-        if !SpecConfig.instance.serverless? && ClusterConfig.instance.storage_engine != :wired_tiger
-          skip 'Test requires WiredTiger storage engine'
-        end
-      end
-    end
-
-    def require_wired_tiger_on_36
-      before(:all) do
-        if ClusterConfig.instance.short_server_version >= '3.6'
-          # Storage detection fails for serverless instances. However, it is safe to
-          # assume that a serverless instance uses WiredTiger Storage Engine.
-          if !SpecConfig.instance.serverless? && ClusterConfig.instance.storage_engine != :wired_tiger
-            skip 'Test requires WiredTiger storage engine on 3.6+ servers'
-          end
-        end
-      end
-    end
-
-    def require_mmapv1
-      before(:all) do
-        if SpecConfig.instance.serverless? || ClusterConfig.instance.storage_engine != :mmapv1
-          skip 'Test requires MMAPv1 storage engine'
-        end
-      end
-    end
 
     def require_enterprise
       before(:all) do

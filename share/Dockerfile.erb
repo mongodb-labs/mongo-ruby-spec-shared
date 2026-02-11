@@ -163,14 +163,12 @@ ENV DOCKER=1
     RUN python3 -mpip install asn1crypto oscrypto flask --upgrade --ignore-installed
   <% end %>
 
-  # FLE is tested against 4.0+ servers.
-  <% if @env.fetch('MONGODB_VERSION') >= '4.0' %>
-    # Requirements in drivers-evergreen-tools:
-    # boto3~=1.19 cryptography~=3.4.8 pykmip~=0.10.0
-    # cryptography does not install due to lacking setuptools_rust
-    # (either that version or anything that isn't part of system packages)
-    RUN python3 -mpip install boto3~=1.19 cryptography pykmip~=0.10.0 'sqlalchemy<2.0.0'
-  <% end %>
+  # FLE requirements
+  # Requirements in drivers-evergreen-tools:
+  # boto3~=1.19 cryptography~=3.4.8 pykmip~=0.10.0
+  # cryptography does not install due to lacking setuptools_rust
+  # (either that version or anything that isn't part of system packages)
+  RUN python3 -mpip install boto3~=1.19 cryptography pykmip~=0.10.0 'sqlalchemy<2.0.0'
 
   <% unless ruby_head? || system_ruby? %>
 

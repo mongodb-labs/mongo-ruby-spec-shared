@@ -250,10 +250,6 @@ calculate_server_args() {
     echo "Unknown topology: $TOPOLOGY" 1>&2
     exit 1
   fi
-  if test -n "$MMAPV1"; then
-    args="$args --storageEngine mmapv1 --smallfiles --noprealloc"
-    uri_options="$uri_options&retryReads=false&retryWrites=false"
-  fi
   if test "$AUTH" = auth; then
     args="$args --auth --username bob --password pwd123"
   elif test "$AUTH" = x509; then
@@ -316,7 +312,6 @@ calculate_server_args() {
     args="$args --bind_ip_all"
   fi
 
-  # MongoDB servers pre-4.2 do not enable zlib compression by default
   if test "$COMPRESSOR" = snappy; then
     args="$args --networkMessageCompressors snappy"
   elif test "$COMPRESSOR" = zlib; then
@@ -366,51 +361,6 @@ launch_ocsp_mock() {
 launch_server() {
   local dbdir="$1"
   python3 -m mtools.mlaunch.mlaunch --dir "$dbdir" --binarypath "$BINDIR" $SERVER_ARGS
-
-  if test "$TOPOLOGY" = sharded-cluster && test $MONGODB_VERSION = 3.6; then
-    # On 3.6 server the sessions collection is not immediately available,
-    # so we run the refreshLogicalSessionCacheNow command on the config server
-    # and again on each mongos in order for the mongoses
-    # to correctly report logicalSessionTimeoutMinutes.
-    mongos_regex="\s*mongos\s+([0-9]+)\s+running\s+[0-9]+"
-    config_server_regex="\s*config\sserver\s+([0-9]+)\s+running\s+[0-9]+"
-    config_server=""
-    mongoses=()
-    if test "$AUTH" = auth
-    then
-      base_url="mongodb://bob:pwd123@localhost"
-    else
-      base_url="mongodb://localhost"
-    fi
-    if test "$SSL" = "ssl"
-    then
-      mongo_command="${BINDIR}/mongo --ssl --sslPEMKeyFile $server_cert_path --sslCAFile $server_ca_path"
-    else
-      mongo_command="${BINDIR}/mongo"
-    fi
-
-    while read -r line
-    do
-        if [[ $line =~ $config_server_regex ]]
-        then
-            port="${BASH_REMATCH[1]}"
-            config_server="${base_url}:${port}"
-        fi
-        if [[ $line =~ $mongos_regex ]]
-        then
-            port="${BASH_REMATCH[1]}"
-            mongoses+=("${base_url}:${port}")
-        fi
-    done < <(python2 -m mtools.mlaunch.mlaunch list --dir "$dbdir" --binarypath "$BINDIR")
-
-    if [ -n "$config_server" ]; then
-      ${mongo_command} "$config_server" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
-      for mongos in ${mongoses[*]}
-      do
-        ${mongo_command} "$mongos" --eval 'db.adminCommand("refreshLogicalSessionCacheNow")'
-      done
-    fi
-  fi
 
   if test "$TOPOLOGY" = load-balanced; then
     if test -z "$haproxy_config"; then

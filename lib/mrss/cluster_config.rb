@@ -45,23 +45,16 @@ module Mrss
     end
 
     # Per https://jira.mongodb.org/browse/SERVER-39052, working with FCV
-    # in sharded topologies is annoying. Also, FCV doesn't exist in servers
-    # less than 3.4. This method returns FCV on 3.4+ servers when in single
+    # in sharded topologies is annoying. This method returns FCV when in single
     # or RS topologies, and otherwise returns the major.minor server version.
     def fcv_ish
       if server_version.nil?
         raise "Deployment server version not known - check that connection to deployment succeeded"
       end
 
-      if server_version >= '3.4' && !sharded_ish?
-        fcv
-      else
-        if short_server_version == '4.1'
-          '4.2'
-        else
-          short_server_version
-        end
-      end
+      return fcv unless sharded_ish?
+
+      short_server_version
     end
 
     # @return [ Mongo::Address ] The address of the primary in the deployment.
@@ -111,34 +104,6 @@ module Mrss
     def topology
       determine_cluster_config
       @topology
-    end
-
-    def storage_engine
-      @storage_engine ||= begin
-        # 2.6 does not have wired tiger
-        if short_server_version == '2.6'
-          :mmapv1
-        else
-          client = ClientRegistry.instance.global_client('root_authorized')
-          if sharded_ish?
-            shards = client.use(:admin).command(listShards: 1).first
-            if shards['shards'].empty?
-              raise 'Shards are empty'
-            end
-            shard = shards['shards'].first
-            address_str = shard['host'].sub(/^.*\//, '').sub(/,.*/, '')
-            client = ClusterTools.instance.direct_client(address_str,
-              SpecConfig.instance.test_options.merge(SpecConfig.instance.auth_options).merge(connect: :direct))
-          end
-          rv = client.use(:admin).command(serverStatus: 1).first
-          rv = rv['storageEngine']['name']
-          rv_map = {
-            'wiredTiger' => :wired_tiger,
-            'mmapv1' => :mmapv1,
-          }
-          rv_map[rv] || rv
-        end
-      end
     end
 
     # This method returns an alternate address for connecting to the configured
@@ -216,7 +181,7 @@ module Mrss
         {}
       end
 
-      if !sharded_ish? && short_server_version >= '3.4'
+      unless sharded_ish?
         rv = @server_parameters['featureCompatibilityVersion']
         @fcv = rv['version'] || rv
       end

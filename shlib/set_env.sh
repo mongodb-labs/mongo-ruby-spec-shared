@@ -70,16 +70,10 @@ set_env_ruby() {
   set_env_java
 
   if [ "$RVM_RUBY" == "ruby-head" ]; then
-    # When we use ruby-head, we do not install the Ruby toolchain.
-    # But we still need Python 3.6+ to run mlaunch.
-    # Since the ruby-head tests are run on ubuntu1604, we can use the
-    # globally installed Python toolchain.
-    #export PATH=/opt/python/3.7/bin:$PATH
+    # we could find a way to build ruby via rbenv here, perhaps?
+    echo 'ruby-head is not current supported'
+    exit 2
 
-    # 12.04, 14.04 and 16.04 are good
-    curl --retry 3 -fL http://rubies.travis-ci.org/ubuntu/`lsb_release -rs`/x86_64/ruby-head.tar.bz2 |tar xfj -
-    # TODO adjust gem path?
-    export PATH=`pwd`/ruby-head/bin:`pwd`/ruby-head/lib/ruby/gems/2.6.0/bin:$PATH
     ruby --version
     ruby --version |grep dev
   elif test "$SYSTEM_RUBY" = 1; then
