@@ -77,6 +77,11 @@ module Mrss
       end
     end
 
+    # Fail command fail point requires transactions to be supported
+    def require_fail_command
+      require_transaction_support
+    end
+
     def require_tls
       before(:all) do
         unless SpecConfig.instance.ssl?
