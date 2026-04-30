@@ -184,21 +184,27 @@ module Mrss
       def extract_summary(pr)
         summary = []
         accumulating = false
+        in_code_block = false
         level = nil
 
         pr['body'].lines.each do |line|
-          # a header of any level titled "summary" will begin the summary
-          if !accumulating && line =~ /^(\#+)\s+summary\s+$/i
-            accumulating = true
-            level = $1.length
+          if !accumulating
+            # a header of any level titled "summary" will begin the summary
+            if line =~ /^(\#+)\s+summary\s+$/i
+              accumulating = true
+              level = $1.length
+            end
+          else
+            # if we encounter a code block, we don't let its contents affect our
+            # header-level counting (i.e. we don't want to accidentally end the
+            # summary just because there's a comment in a code block)
+            in_code_block = !in_code_block if line =~ /^```/
 
-          # a header of any level less than or equal to the summary header's
-          # level will end the summary
-          elsif accumulating && line =~ /^\#{1,#{level}}\s+/
-            break
+            # a header of any level less than or equal to the summary header's
+            # level will end the summary
+            break if !in_code_block && line =~ /^\#{1,#{level}}\s+/
 
-          # otherwise, the line is part of the summary
-          elsif accumulating
+            # otherwise, the line is part of the summary
             summary << line
           end
         end
