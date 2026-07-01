@@ -76,8 +76,10 @@ namespace :candidate do
 
   # Ensures the current branch is up-to-date with no uncommitted changes
   task :check_branch_status do
-    sh 'git pull >/dev/null', verbose: false
-    changes = `git status --short --untracked-files=no`.strip
-    abort "There are uncommitted changes. Commit (or revert) the changes and try again." if changes.length > 0
+    unless ENV['SKIP_STATUS_CHECK']
+      sh 'git pull >/dev/null', verbose: false
+      changes = `git status --short --untracked-files=no`.strip
+      abort "There are uncommitted changes. Commit (or revert) the changes and try again." if changes.length > 0
+    end
   end
 end
