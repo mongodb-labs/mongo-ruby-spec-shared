@@ -22,4 +22,78 @@ RSpec.describe Mrss::Release::Candidate do
       expect(candidate.send(:pr_type_code, nil)).to eq('?')
     end
   end
+
+  describe '#pending_pr_numbers' do
+    before do
+      allow(candidate).to receive(:pending_commit_shas).and_return(shas)
+    end
+
+    def gh_result(stdout, success:, stderr: '')
+      [ stdout, stderr, instance_double(Process::Status, success?: success) ]
+    end
+
+    context 'when a commit has a normal PR association' do
+      let(:shas) { %w[aaa111] }
+
+      it 'includes the PR number' do
+        allow(Open3).to receive(:capture3).
+          with('gh', 'api', 'repos/{owner}/{repo}/commits/aaa111/pulls', '--jq', '.[].number').
+          and_return(gh_result("42\n", success: true))
+
+        expect(candidate.pending_pr_numbers).to eq(%w[42])
+      end
+    end
+
+    context 'when a commit has no "(#NNN)" suffix in its message but does have an associated PR' do
+      let(:shas) { %w[bbb222] }
+
+      it 'still includes the PR number' do
+        allow(Open3).to receive(:capture3).
+          with('gh', 'api', 'repos/{owner}/{repo}/commits/bbb222/pulls', '--jq', '.[].number').
+          and_return(gh_result("369\n", success: true))
+
+        expect(candidate.pending_pr_numbers).to eq(%w[369])
+      end
+    end
+
+    context 'when a commit has no associated PR at all' do
+      let(:shas) { %w[ccc333] }
+
+      it 'warns and excludes the commit' do
+        allow(Open3).to receive(:capture3).
+          with('gh', 'api', 'repos/{owner}/{repo}/commits/ccc333/pulls', '--jq', '.[].number').
+          and_return(gh_result('', success: true))
+
+        expect(candidate).to receive(:warn).with(/ccc333/)
+        expect(candidate.pending_pr_numbers).to eq([])
+      end
+    end
+
+    context 'when two commits are associated with the same PR' do
+      let(:shas) { %w[ddd444 eee555] }
+
+      it 'deduplicates the PR number' do
+        allow(Open3).to receive(:capture3).
+          with('gh', 'api', 'repos/{owner}/{repo}/commits/ddd444/pulls', '--jq', '.[].number').
+          and_return(gh_result("99\n", success: true))
+        allow(Open3).to receive(:capture3).
+          with('gh', 'api', 'repos/{owner}/{repo}/commits/eee555/pulls', '--jq', '.[].number').
+          and_return(gh_result("99\n", success: true))
+
+        expect(candidate.pending_pr_numbers).to eq(%w[99])
+      end
+    end
+
+    context 'when the gh api call fails' do
+      let(:shas) { %w[fff666] }
+
+      it 'raises an error identifying the commit' do
+        allow(Open3).to receive(:capture3).
+          with('gh', 'api', 'repos/{owner}/{repo}/commits/fff666/pulls', '--jq', '.[].number').
+          and_return(gh_result('', success: false, stderr: 'HTTP 422'))
+
+        expect { candidate.pending_pr_numbers }.to raise_error(/fff666/)
+      end
+    end
+  end
 end
