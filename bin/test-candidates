@@ -1,0 +1,427 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# test-candidates — exercises the code paths in candidate:create
+#
+# Commands:
+#   setup      Create a scratch git repo with stubs (run once before testing)
+#   test-1     Fresh run: creates the RC branch
+#   test-2     Re-run from master: branch already exists
+#   test-3     Re-run from the RC branch itself
+#   test-4     Partial-failure recovery: branch exists but version files are old
+#   test-5     Open PR already exists: skips gh pr create
+#   test-all   Run all five tests in sequence
+
+require 'open3'
+require 'fileutils'
+require 'tmpdir'
+
+REPO_ROOT  = File.expand_path('..', __dir__)
+STATE_FILE = File.expand_path('~/.test-candidates-state')
+
+INITIAL_VERSION    = '1.0.0'
+RC_VERSION         = '1.0.1'
+RC_BRANCH          = "rc-#{RC_VERSION}"
+FAKE_ORIGIN_URL    = 'git@github.com:testuser/test-repo.git'
+STUB_USER          = 'testuser'
+
+INITIAL_PRODUCT_YML = <<~YAML
+  ---
+  name: Test Product
+  description: a test product
+  package: test-gem
+  jira: https://jira.mongodb.org/browse/TEST
+  version:
+    number: #{INITIAL_VERSION}
+    file: lib/version.rb
+YAML
+
+# ─── Terminal output ───────────────────────────────────────────────────────────
+
+PASS_MARK = "\e[32m✓\e[0m"
+FAIL_MARK = "\e[31m✗\e[0m"
+NOTE_MARK = "\e[33m→\e[0m"
+
+def pass(msg) = puts("  #{PASS_MARK} #{msg}")
+def fail!(msg) = (@failures += 1; puts("  #{FAIL_MARK} #{msg}"))
+def note(msg)  = puts("  #{NOTE_MARK} #{msg}")
+def header(title) = puts("\n\e[1m#{title}\e[0m\n#{'─' * 60}")
+
+# ─── Persisted state ───────────────────────────────────────────────────────────
+
+def tmp_dir
+  @tmp_dir ||= (File.read(STATE_FILE).strip rescue nil)
+end
+
+def validate_setup!
+  abort "Run '#{File.basename($PROGRAM_NAME)} setup' first." \
+    unless tmp_dir && Dir.exist?(tmp_dir)
+end
+
+# ─── Git helpers (always use the real git, bypassing stubs) ───────────────────
+
+def git(*args, dir: tmp_dir)
+  out, err, status = Open3.capture3('git', *args, chdir: dir)
+  raise "git #{args.join(' ')} failed: #{(out + err).strip}" unless status.success?
+  (out + err).strip
+end
+
+def current_branch    = git('rev-parse', '--abbrev-ref', 'HEAD')
+def branch_exists?(b) = !git('branch', '--list', b).empty?
+
+def version_in(relative_path)
+  File.read("#{tmp_dir}/#{relative_path}")
+      .match(/(?:number:|VERSION\s*=)\s*['"]?(\d+\.\d+\.\d+)['"]?/)
+      &.[](1)
+end
+
+def commits_since_initial(branch = current_branch)
+  sha = File.read("#{tmp_dir}/.initial-sha").strip
+  git('rev-list', '--count', "#{sha}..#{branch}").to_i
+end
+
+# ─── Rake runner (uses stub PATH so rake sees stub git and gh) ─────────────────
+
+def run_rake
+  env = {
+    'PATH'    => "#{tmp_dir}/bin:#{ENV['PATH']}",
+    'RELEASE' => 'patch',
+    'HOME'    => ENV.fetch('HOME', '/tmp'),
+  }
+  out, err, status = Open3.capture3(env, 'rake', 'candidate:create', chdir: tmp_dir)
+  [out + err, status.success?]
+end
+
+# ─── Stub writers ──────────────────────────────────────────────────────────────
+
+def write_git_stub
+  # Intercepts only the two calls the rake task makes that need non-local answers:
+  #   git pull                      → pretend it succeeded (local origin has no upstream)
+  #   git config get remote.origin.url → return a GitHub-shaped URL so the user-extraction
+  #                                       regex matches; actual pushes use the local origin
+  real_git = `which git`.strip
+  File.write("#{tmp_dir}/bin/git", <<~BASH)
+    #!/bin/bash
+    if [[ "$1" == "pull" ]]; then
+      exit 0
+    elif [[ "$*" == "config get remote.origin.url" ]]; then
+      echo "#{FAKE_ORIGIN_URL}"
+    else
+      exec "#{real_git}" "$@"
+    fi
+  BASH
+  FileUtils.chmod(0o755, "#{tmp_dir}/bin/git")
+end
+
+def write_gh_stub(pr_exists: false)
+  # Handles three call shapes from the rake task:
+  #   gh pr list --limit 256 ...    → empty PR list (no labels to parse)
+  #   gh pr list --head ... --state open ...  → "true" or "false"
+  #   gh pr create ...              → fake PR URL
+  File.write("#{tmp_dir}/bin/gh", <<~BASH)
+    #!/bin/bash
+    if   [[ "$*" == *"--limit 256"* ]]; then echo "[]"
+    elif [[ "$*" == *"--head"*       ]]; then echo "#{pr_exists ? 'true' : 'false'}"
+    elif [[ "$*" == *"pr create"*    ]]; then echo "https://github.com/test/test/pull/99"
+    fi
+  BASH
+  FileUtils.chmod(0o755, "#{tmp_dir}/bin/gh")
+end
+
+# ─── State management ──────────────────────────────────────────────────────────
+
+def reset_to_initial
+  git('checkout', '-f', 'master')
+
+  # Delete local rc-* branches
+  git('branch').split
+               .map { _1.sub(/^\* /, '').strip }
+               .select { _1.start_with?('rc-') }
+               .each { git('branch', '-D', _1) }
+
+  # Delete rc-* branches from local bare origin
+  git('ls-remote', '--heads', 'origin').each_line do |line|
+    ref = line.split.last.to_s
+    next unless ref.start_with?('refs/heads/rc-')
+    git('push', 'origin', '--delete', ref.delete_prefix('refs/heads/'))
+  end
+
+  git('reset', '--hard', File.read("#{tmp_dir}/.initial-sha").strip)
+
+  # Restore version files on master (safe no-op if already correct)
+  File.write("#{tmp_dir}/product.yml", INITIAL_PRODUCT_YML)
+  File.write("#{tmp_dir}/lib/version.rb", "VERSION = '#{INITIAL_VERSION}'\n")
+
+  write_git_stub
+  write_gh_stub
+end
+
+def create_committed_rc_branch
+  git('checkout', '-b', RC_BRANCH)
+  File.write("#{tmp_dir}/product.yml", INITIAL_PRODUCT_YML.sub(INITIAL_VERSION, RC_VERSION))
+  File.write("#{tmp_dir}/lib/version.rb", "VERSION = '#{RC_VERSION}'\n")
+  git('commit', '-am', "Bump version to #{RC_VERSION}")
+  git('push', 'origin', RC_BRANCH)
+end
+
+# ─── Assertions ────────────────────────────────────────────────────────────────
+
+def assert_output_includes(output, *strings)
+  strings.each do |s|
+    if output.include?(s)
+      pass "output includes #{s.inspect}"
+    else
+      fail! "output missing #{s.inspect}"
+      puts output.gsub(/^/, '      ')
+    end
+  end
+end
+
+def assert_output_excludes(output, *strings)
+  strings.each do |s|
+    if output.include?(s)
+      fail! "output unexpectedly includes #{s.inspect}"
+    else
+      pass "output does not include #{s.inspect}"
+    end
+  end
+end
+
+def assert_on_branch(name)
+  actual = current_branch
+  actual == name ? pass("on branch #{name.inspect}") \
+                 : fail!("expected branch #{name.inspect}, got #{actual.inspect}")
+end
+
+def assert_version_in(path, version)
+  actual = version_in(path)
+  actual == version ? pass("#{path} has version #{version}") \
+                    : fail!("#{path} has version #{actual.inspect}, expected #{version.inspect}")
+end
+
+def assert_commits(branch, n)
+  actual = commits_since_initial(branch)
+  actual == n ? pass("#{branch} has #{n} commit(s) since initial") \
+              : fail!("#{branch} has #{actual} commit(s), expected #{n}")
+end
+
+# ─── Tests ─────────────────────────────────────────────────────────────────────
+
+def test_1
+  header 'Test 1: Fresh run — creates branch, writes version files, commits'
+  @failures = 0
+
+  reset_to_initial
+  write_gh_stub(pr_exists: false)
+  note "on master, no RC branch, no open PR"
+
+  output, = run_rake
+
+  assert_output_includes output,
+    'bumping version and creating RC branch...',
+    "git checkout -b #{RC_BRANCH}",
+    "Bump version to #{RC_VERSION}"
+  assert_output_excludes output,
+    'already in an RC branch',
+    'RC branch already exists'
+
+  assert_on_branch RC_BRANCH
+  assert_version_in 'product.yml',      RC_VERSION
+  assert_version_in 'lib/version.rb',   RC_VERSION
+  assert_commits RC_BRANCH, 1
+
+  report_result
+end
+
+def test_2
+  header 'Test 2: Re-run from master — branch exists, no double-bump, no new commit'
+  @failures = 0
+
+  reset_to_initial
+  create_committed_rc_branch
+  git('checkout', 'master')
+  write_gh_stub(pr_exists: true)
+  note "on master, #{RC_BRANCH} already committed, PR open"
+
+  output, = run_rake
+
+  assert_output_includes output,
+    'RC branch already exists -- resuming from existing branch',
+    "git checkout #{RC_BRANCH}",
+    'no uncommitted changes -- no commit step necessary',
+    "pull request already exists for #{STUB_USER}:#{RC_BRANCH}"
+  assert_output_excludes output,
+    'bumping version and creating RC branch...',
+    "git checkout -b #{RC_BRANCH}"
+
+  assert_on_branch RC_BRANCH
+  assert_version_in 'product.yml',    RC_VERSION
+  assert_commits RC_BRANCH, 1   # no additional commit
+  report_result
+end
+
+def test_3
+  header 'Test 3: Re-run from RC branch — skips checkout entirely'
+  @failures = 0
+
+  reset_to_initial
+  create_committed_rc_branch
+  # stay on RC_BRANCH
+  write_gh_stub(pr_exists: true)
+  note "already on #{RC_BRANCH}, PR open"
+
+  output, = run_rake
+
+  assert_output_includes output,
+    'already in an RC branch -- skipping checkout',
+    'no uncommitted changes -- no commit step necessary',
+    "pull request already exists for #{STUB_USER}:#{RC_BRANCH}"
+  assert_output_excludes output,
+    'bumping version and creating RC branch...',
+    'RC branch already exists -- resuming'
+
+  assert_on_branch RC_BRANCH
+  assert_commits RC_BRANCH, 1   # still exactly one commit
+  report_result
+end
+
+def test_4
+  header 'Test 4: Partial-failure recovery — branch exists but version files not written'
+  @failures = 0
+
+  reset_to_initial
+  # Simulate a run interrupted after git checkout -b but before save_version!
+  git('checkout', '-b', RC_BRANCH)
+  git('checkout', 'master')
+  write_gh_stub(pr_exists: false)
+  note "on master, #{RC_BRANCH} exists locally but version files are still #{INITIAL_VERSION}"
+
+  output, = run_rake
+
+  assert_output_includes output,
+    'RC branch already exists -- resuming from existing branch',
+    'no uncommitted changes -- no commit step necessary'
+  assert_output_excludes output,
+    "git checkout -b #{RC_BRANCH}"
+
+  assert_on_branch RC_BRANCH
+  # Known gap: the resume path does not call save_version!, so the
+  # version files are not updated. This assertion documents that behavior.
+  assert_version_in 'product.yml', INITIAL_VERSION
+  note "version files remain at #{INITIAL_VERSION} — partial-failure gap (expected)"
+
+  report_result
+end
+
+def test_5
+  header 'Test 5: Open PR already exists — skips gh pr create'
+  @failures = 0
+
+  reset_to_initial
+  write_gh_stub(pr_exists: true)
+  note "on master, no RC branch, but gh reports a PR already open"
+
+  output, = run_rake
+
+  assert_output_includes output,
+    'bumping version and creating RC branch...',
+    "pull request already exists for #{STUB_USER}:#{RC_BRANCH}"
+  assert_output_excludes output,
+    'writing release notes'
+
+  assert_on_branch RC_BRANCH
+  assert_version_in 'product.yml',    RC_VERSION
+  assert_version_in 'lib/version.rb', RC_VERSION
+
+  report_result
+end
+
+def report_result
+  if @failures == 0
+    puts "\n  \e[32mPASS\e[0m"
+  else
+    puts "\n  \e[31mFAIL (#{@failures} failed assertion(s))\e[0m"
+  end
+  @failures == 0
+end
+
+# ─── Setup ─────────────────────────────────────────────────────────────────────
+
+def setup
+  if tmp_dir && Dir.exist?(tmp_dir)
+    note "removing previous test environment: #{tmp_dir}"
+    FileUtils.rm_rf(tmp_dir)
+    @tmp_dir = nil
+  end
+
+  dir = Dir.mktmpdir('test-candidates-')
+  FileUtils.mkdir_p("#{dir}/lib")
+  FileUtils.mkdir_p("#{dir}/bin")
+
+  File.write("#{dir}/product.yml", INITIAL_PRODUCT_YML)
+  File.write("#{dir}/lib/version.rb", "VERSION = '#{INITIAL_VERSION}'\n")
+  File.write("#{dir}/Rakefile", <<~RUBY)
+    \$LOAD_PATH.unshift('#{REPO_ROOT}/lib')
+    load '#{REPO_ROOT}/lib/tasks/candidate.rake'
+  RUBY
+
+  git('init', '-b', 'master', dir: dir)
+  git('config', 'user.email', 'test@test.com', dir: dir)
+  git('config', 'user.name',  'Test',          dir: dir)
+  git('add', '-A',                             dir: dir)
+  git('commit', '-m', 'initial',               dir: dir)
+  git('tag', "v#{INITIAL_VERSION}",            dir: dir)
+
+  File.write("#{dir}/.initial-sha", git('rev-parse', 'HEAD', dir: dir))
+
+  origin = "#{dir}/origin.git"
+  git('init', '--bare', origin, dir: dir)
+  git('remote', 'add', 'origin', origin, dir: dir)
+  git('push', '-u', 'origin', 'master',  dir: dir)
+
+  @tmp_dir = dir
+  write_git_stub
+  write_gh_stub
+
+  File.write(STATE_FILE, dir)
+
+  puts "Test environment created: #{dir}"
+  puts "Run '#{File.basename($PROGRAM_NAME)} test-all' to run all tests."
+end
+
+# ─── Entry point ───────────────────────────────────────────────────────────────
+
+TESTS = {
+  'test-1' => method(:test_1),
+  'test-2' => method(:test_2),
+  'test-3' => method(:test_3),
+  'test-4' => method(:test_4),
+  'test-5' => method(:test_5),
+}.freeze
+
+command = ARGV[0]
+
+case command
+when 'setup'
+  setup
+when /\Atest-\d+\z/
+  validate_setup!
+  t = TESTS[command] or abort "Unknown test: #{command}. Available: #{TESTS.keys.join(', ')}"
+  exit 1 unless t.call
+when 'test-all'
+  validate_setup!
+  results = TESTS.map { |name, t| puts; t.call.tap { pass name } }
+  puts "\n#{'─' * 60}"
+  passed = results.count(true)
+  if passed == results.size
+    puts "\e[32m#{passed}/#{results.size} passed\e[0m"
+  else
+    puts "\e[31m#{passed}/#{results.size} passed\e[0m"
+    exit 1
+  end
+else
+  abort <<~USAGE
+    Usage: #{File.basename($PROGRAM_NAME)} <command>
+    Commands: setup | test-1 | test-2 | test-3 | test-4 | test-5 | test-all
+  USAGE
+end

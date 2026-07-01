@@ -39,6 +39,11 @@ module Mrss
         File.write(version_file, new_module)
       end
 
+      def save_version!
+        save_product_file!
+        rewrite_version_file!
+      end
+
       def version
         @hash['version']['number']
       end
@@ -62,12 +67,8 @@ module Mrss
         version.split(/\./, 4)
       end
 
-      # bump the version according to the given release type:
-      #
-      #  'major' -> increment major component, zero the others
-      #  'minor' -> increment minor component, zero the patch
-      #  'patch' -> increment the patch component
-      def bump_version(release)
+      # Return the next version number without actually bumping the version
+      def peek_next_version(release)
         major, minor, patch, suffix = version_parts
 
         case release
@@ -83,7 +84,16 @@ module Mrss
           raise ArgumentError, "invalid release type: #{release.inspect}"
         end
 
-        self.version = [ major, minor, patch ].join('.')
+        [ major, minor, patch ].join('.')
+      end
+
+      # bump the version according to the given release type:
+      #
+      #  'major' -> increment major component, zero the others
+      #  'minor' -> increment minor component, zero the patch
+      #  'patch' -> increment the patch component
+      def bump_version(release)
+        self.version = peek_next_version(release)
       end
 
       # Invokes `#bump_version`, and then saves the new version to the

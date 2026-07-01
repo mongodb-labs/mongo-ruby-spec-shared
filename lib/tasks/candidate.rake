@@ -36,22 +36,41 @@ namespace :candidate do
       match = origin.match(/:(.*?)\//) or raise "origin url is not in expected format: #{origin.inspect}"
       user = match[1]
 
-      puts 'gathering candidate info and bumping version...'
-      candidate.bump_version!
+      if candidate.rc_branch?
+        puts 'already in an RC branch -- skipping checkout'
+      else
+        candidate.bump_version
+        if candidate.branch_exists?
+          puts 'RC branch already exists -- resuming from existing branch'
+          sh 'git', 'checkout', candidate.branch_name
+        else
+          puts 'bumping version and creating RC branch...'
+          sh 'git', 'checkout', '-b', candidate.branch_name
+          candidate.save_version!
+        end
+      end
 
-      puts 'writing release notes to /tmp/pr-body.md...'
-      File.write('/tmp/pr-body.md', candidate.release_notes)
+      if candidate.uncommitted_changes?
+        sh 'git', 'commit', '-am', "Bump version to #{candidate.product.version}"
+      else
+        puts 'no uncommitted changes -- no commit step necessary'
+      end
 
-      sh 'git', 'checkout', '-b', candidate.branch_name
-      sh 'git', 'commit', '-am', "Bump version to #{candidate.product.version}"
       sh 'git', 'push', 'origin', candidate.branch_name
 
-      sh 'gh', 'pr', 'create',
-           '--head', "#{user}:#{candidate.branch_name}",
-           '--base', candidate.product.base_branch,
-           '--title', "Release candidate for #{candidate.product.version}",
-           '--label', 'release-candidate',
-           '--body-file', '/tmp/pr-body.md'
+      if candidate.pull_request_exists?(user, candidate.branch_name)
+        puts "pull request already exists for #{user}:#{candidate.branch_name}"
+      else
+        puts 'writing release notes to /tmp/pr-body.md...'
+        File.write('/tmp/pr-body.md', candidate.release_notes)
+
+        sh 'gh', 'pr', 'create',
+             '--head', "#{user}:#{candidate.branch_name}",
+             '--base', candidate.product.base_branch,
+             '--title', "Release candidate for #{candidate.product.version}",
+             '--label', 'release-candidate',
+             '--body-file', '/tmp/pr-body.md'
+      end
     end
   end
 

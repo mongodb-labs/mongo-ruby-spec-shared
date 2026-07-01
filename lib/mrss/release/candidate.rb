@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'json'
+require 'open3'
 
 require_relative 'product_data'
 
@@ -32,6 +33,10 @@ module Mrss
         @product ||= ProductData.new
       end
 
+      def peek_version
+        product.peek_next_version(release_type)
+      end
+
       def bump_version
         product.bump_version(release_type)
       end
@@ -40,8 +45,36 @@ module Mrss
         product.bump_version!(release_type)
       end
 
+      def save_version!
+        product.save_version!
+      end
+
       def branch_name
-        @branch_name ||= "rc-#{product.version}"
+        "rc-#{product.version}"
+      end
+
+      def current_branch_name
+        branch = `git symbolic-ref --short HEAD`.chomp
+        branch unless branch.to_s.empty?
+      end
+
+      def rc_branch?
+        current_branch_name == branch_name
+      end
+
+      def branch_exists?(branch=branch_name)
+        system('git', 'show-ref', '--verify', '--quiet', "refs/heads/#{branch}")
+      end
+
+      def uncommitted_changes?
+        !system('git', 'diff-index', '--quiet', 'HEAD', '--')
+      end
+
+      def pull_request_exists?(owner, branch)
+        head = [ owner, branch ].join(':')
+        out, = Open3.capture2('gh', 'pr', 'list', '--head', head, '--state', 'open',
+                              '--json', 'number', '--jq', 'length > 0')
+        out.to_s.strip == 'true'
       end
 
       # return a string of commit names since the last release
