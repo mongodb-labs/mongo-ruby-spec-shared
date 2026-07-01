@@ -59,12 +59,16 @@ RSpec.describe Mrss::Release::Candidate do
     context 'when a commit has no associated PR at all' do
       let(:shas) { %w[ccc333] }
 
-      it 'warns and excludes the commit' do
+      it 'warns (naming the commit and its subject) and excludes the commit' do
         allow(Open3).to receive(:capture3).
           with('gh', 'api', 'repos/{owner}/{repo}/commits/ccc333/pulls', '--jq', '.[].number').
           and_return(gh_result('', success: true))
+        allow(candidate).to receive(:`).and_return("Direct push to master\n")
 
-        expect(candidate).to receive(:warn).with(/ccc333/)
+        expect(candidate).to receive(:warn) do |message|
+          expect(message).to include('ccc333')
+          expect(message).to include('Direct push to master')
+        end
         expect(candidate.pending_pr_numbers).to eq([])
       end
     end

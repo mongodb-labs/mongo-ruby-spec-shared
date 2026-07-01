@@ -175,7 +175,12 @@ module Mrss
         raise "gh api lookup failed for commit #{sha}: #{err}" unless status.success?
 
         numbers = out.split("\n")
-        warn "warning: commit #{sha} has no associated pull request -- excluding it from the release" if numbers.empty?
+
+        if numbers.empty?
+          subject = `git log -1 --pretty=format:%s #{sha}`.chomp
+          warn "warning: commit #{sha} (#{subject}) has no associated pull request -- excluding it from the release"
+        end
+
         numbers
       end
 
