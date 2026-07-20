@@ -246,11 +246,13 @@ module Mrss
     end
 
     def libmongocrypt_path
+      # As of libmongocrypt 1.18.0+ (RUBY-3829 / DRIVERS-3441), the signed
+      # per-platform release tarballs extract to a flat directory structure
+      # (include/ and lib64/) rather than the per-distro tree the old
+      # libmongocrypt-all.tar.gz used.
       case distro
-      when /ubuntu..04/
-        "./#{distro}-64/nocrypto/lib64/libmongocrypt.so"
-      when /debian../
-        "./#{distro}/nocrypto/lib64/libmongocrypt.so"
+      when /ubuntu..04/, /debian../
+        "./lib64/libmongocrypt.so"
       else
         raise "This script does not support running FLE tests on #{distro}."
       end

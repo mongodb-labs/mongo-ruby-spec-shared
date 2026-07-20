@@ -208,7 +208,21 @@ WORKDIR /app
 <% end %>
 
 <% if fle? %>
-  RUN curl --retry 3 -fL "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz" |tar zxf -
+  # Download the latest libmongocrypt release tarball from GitHub, verify its
+  # signature, and extract it. See RUBY-3829 / DRIVERS-3441: the direct S3 links
+  # are deprecated in favor of the signed per-platform tarballs attached to the
+  # GitHub releases.
+  RUN set -o errexit; \
+    LIBMONGOCRYPT_VERSION=$(curl --retry 3 -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/mongodb/libmongocrypt/releases/latest | sed 's|.*/tag/||'); \
+    LIBMONGOCRYPT_TARBALL="libmongocrypt-linux-x86_64-glibc_2_7-nocrypto-${LIBMONGOCRYPT_VERSION}.tar.gz"; \
+    LIBMONGOCRYPT_SIGNATURE="libmongocrypt-linux-x86_64-glibc_2_7-nocrypto-${LIBMONGOCRYPT_VERSION}.asc"; \
+    LIBMONGOCRYPT_BASE_URL="https://github.com/mongodb/libmongocrypt/releases/download/${LIBMONGOCRYPT_VERSION}"; \
+    curl --retry 3 -fSL -O "${LIBMONGOCRYPT_BASE_URL}/${LIBMONGOCRYPT_TARBALL}"; \
+    curl --retry 3 -fSL -O "${LIBMONGOCRYPT_BASE_URL}/${LIBMONGOCRYPT_SIGNATURE}"; \
+    curl --retry 3 -fSL -O https://pgp.mongodb.com/libmongocrypt.pub; \
+    gpg --import libmongocrypt.pub; \
+    gpg --verify "${LIBMONGOCRYPT_SIGNATURE}" "${LIBMONGOCRYPT_TARBALL}"; \
+    tar zxf "${LIBMONGOCRYPT_TARBALL}"
 
   <%= "ENV LIBMONGOCRYPT_PATH #{libmongocrypt_path}" %>
 <% end %>
