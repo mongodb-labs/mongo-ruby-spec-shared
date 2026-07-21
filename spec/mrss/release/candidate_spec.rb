@@ -23,6 +23,54 @@ RSpec.describe Mrss::Release::Candidate do
     end
   end
 
+  describe '#release_notes_for_type (private)' do
+    def pr(jira:, title:, summary: nil)
+      {
+        'jira' => jira,
+        'short-title' => title,
+        'summary' => summary,
+        'url' => 'https://github.com/org/repo/pull/1',
+      }
+    end
+
+    def notes_for(prs)
+      allow(candidate).to receive(:prs_by_type).and_return(bug: prs)
+      candidate.send(:release_notes_for_type, :bug)
+    end
+
+    context 'for a summarized PR with a jira issue' do
+      it 'puts the title first, then jira and PR links' do
+        lines = notes_for([ pr(jira: 'RUBY-1', title: 'Fix the thing', summary: 'Details here') ])
+        expect(lines).to include(
+          '### Fix the thing ([RUBY-1](https://jira.mongodb.org/browse/RUBY-1) | [PR](https://github.com/org/repo/pull/1))'
+        )
+      end
+    end
+
+    context 'for a summarized PR without a jira issue' do
+      it 'puts the title first, then just the PR link' do
+        lines = notes_for([ pr(jira: nil, title: 'Fix the thing', summary: 'Details here') ])
+        expect(lines).to include('### Fix the thing ([PR](https://github.com/org/repo/pull/1))')
+      end
+    end
+
+    context 'for an unsummarized PR with a jira issue' do
+      it 'puts the title first, then jira and PR links' do
+        lines = notes_for([ pr(jira: 'RUBY-2', title: 'Small fix') ])
+        expect(lines).to include(
+          '* Small fix ([RUBY-2](https://jira.mongodb.org/browse/RUBY-2) | [PR](https://github.com/org/repo/pull/1))'
+        )
+      end
+    end
+
+    context 'for an unsummarized PR without a jira issue' do
+      it 'puts the title first, then just the PR link' do
+        lines = notes_for([ pr(jira: nil, title: 'Small fix') ])
+        expect(lines).to include('* Small fix ([PR](https://github.com/org/repo/pull/1))')
+      end
+    end
+  end
+
   describe '#pending_pr_numbers' do
     before do
       allow(candidate).to receive(:pending_commit_shas).and_return(shas)

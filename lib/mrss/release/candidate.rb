@@ -197,10 +197,7 @@ module Mrss
           summarized, unsummarized = prs.partition { |pr| pr['summary'] }
 
           summarized.each do |pr|
-            header = [ '### ' ]
-            header << "[#{pr['jira']}](#{jira_url(pr['jira'])}) " if pr['jira']
-            header << "#{pr['short-title']} ([PR](#{pr['url']}))"
-            lines << header.join
+            lines << "### #{pr['short-title']} (#{pr_reference_links(pr)})"
             lines << ''
             lines << pr['summary']
             lines << ''
@@ -213,11 +210,7 @@ module Mrss
           end
 
           unsummarized.each do |pr|
-            line = [ '* ' ]
-            line << "[#{pr['jira']}](#{jira_url(pr['jira'])}) " if pr['jira']
-            line << "#{pr['short-title']} ([PR](#{pr['url']}))"
-
-            lines << line.join
+            lines << "* #{pr['short-title']} (#{pr_reference_links(pr)})"
           end
 
           lines << ''
@@ -227,6 +220,16 @@ module Mrss
       # returns the URL of for the given jira issue
       def jira_url(issue)
         "https://jira.mongodb.org/browse/#{issue}"
+      end
+
+      # returns the parenthetical reference links for a PR, joined with
+      # " | ". Includes the jira issue link (when present) followed by the
+      # PR link, e.g. "[RUBY-1](...) | [PR](...)".
+      def pr_reference_links(pr)
+        refs = []
+        refs << "[#{pr['jira']}](#{jira_url(pr['jira'])})" if pr['jira']
+        refs << "[PR](#{pr['url']})"
+        refs.join(' | ')
       end
 
       # assumes a pr title in the format of "JIRA-1234 PR Title (#1234)",
