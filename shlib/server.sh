@@ -46,21 +46,31 @@ prepare_server() {
   get_distro
   arch="${1:-$DISTRO}"
 
+  # "latest"/"latest-build" resolve to a presigned S3 URL whose query string
+  # carries credentials. Disable command tracing while resolving and using it,
+  # so those credentials are never echoed into CI logs.
+  local xtrace_is_set=
+  case $- in *x*) xtrace_is_set=1; set +x;; esac
   get_mongodb_download_url_for "$arch" "$MONGODB_VERSION"
   prepare_server_from_url "$MONGODB_DOWNLOAD_URL" "$MONGOSH_DOWNLOAD_URL"
+  test -n "$xtrace_is_set" && set -x
+
+  return 0
 }
 
 prepare_server_from_url() {
-  server_url=$1
-  mongosh_url=$2
+  local server_url=$1
+  local mongosh_url=$2
 
-  dirname=`basename $server_url |sed -e s/.tgz//`
+  # Use only the URL path for the install directory: a presigned URL's query
+  # string holds credentials and can exceed the filesystem name length limit.
+  dirname=`basename "${server_url%%\?*}" |sed -e s/.tgz//`
   mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb/"$dirname"
   mkdir -p "$mongodb_dir"
-  curl --retry 3 $server_url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
+  curl --retry 3 "$server_url" | tar xz -C "$mongodb_dir" --strip-components 1 -f -
 
   if test -n "$mongosh_url"; then
-    curl --retry 3 $mongosh_url | tar xz -C "$mongodb_dir" --strip-components 1 -f -
+    curl --retry 3 "$mongosh_url" | tar xz -C "$mongodb_dir" --strip-components 1 -f -
   fi
 
   BINDIR="$mongodb_dir"/bin
